@@ -4,9 +4,7 @@
 
 #include <Monkey.h>
 #include <Music/Music.h>
-#include <Music/Temperament.h>
-#include <Music/ScaleMaps.h>
-#include <Music/Labels.h>
+#include <Music/Tables.h>
 #include <Music/Gnome.h>
 
 #include "Voices/Bass.h"
@@ -51,7 +49,7 @@ enum ScaleIndex
     SCALE_ITEM_COUNT
 };
 
-HarmonicMode myMode     = HarmonicMode::Minor;
+HarmonicMode myMode     = HarmonicMode::Major;
 ScaleIndex   myScaleIdx = IONIAN_ITEM;
 
 // A4 = 440 Hz in 12-EDO where C is degree 0 and A is degree 9.
@@ -60,10 +58,10 @@ TuningReference refA4(440.0f, 9, 0);
 Temperament     t;
 Gnome           gnome(ts, BARS);
 ScaleMap        scale;
-TheBass         bass(ts, refA4, t, scale);
-TheTenor        tenor(ts, refA4, t, scale);
-TheAlto         alto(ts, refA4, t, scale);
-TheSoprano      soprano(ts, refA4, t, scale);
+TheBass         bass(hw, ts, refA4, t, scale);
+TheTenor        tenor(hw, ts, refA4, t, scale);
+TheAlto         alto(hw, ts, refA4, t, scale);
+TheSoprano      soprano(hw, ts, refA4, t, scale);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Runtime status
@@ -80,7 +78,6 @@ MappedFloatValue
     altoVol(1.0f, 100.0f, 100.0f, MappedFloatValue::Mapping::log, "%", 0);
 MappedFloatValue
     sopranoVol(1.0f, 100.0f, 100.0f, MappedFloatValue::Mapping::log, "%", 0);
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Canvas Callbacks for UI
@@ -120,6 +117,7 @@ void CloseMainMenu()
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void SetScaleIndex(ScaleIndex scaleIdx)
 {
     myScaleIdx                = scaleIdx;
@@ -129,38 +127,38 @@ void SetScaleIndex(ScaleIndex scaleIdx)
     {
         default:
         case IONIAN_ITEM:
-            palette     = IONIAN_DEGREES_12;
-            palette_len = ArrayLen(IONIAN_DEGREES_12);
+            palette     = IONIAN_D12;
+            palette_len = ArrayLen(IONIAN_D12);
             myMode      = HarmonicMode::Major;
             break;
         case DORIAN_ITEM:
-            palette     = DORIAN_DEGREES_12;
-            palette_len = ArrayLen(DORIAN_DEGREES_12);
+            palette     = DORIAN_D12;
+            palette_len = ArrayLen(DORIAN_D12);
             myMode      = HarmonicMode::Minor;
             break;
         case PHRYGIAN_ITEM:
-            palette     = PHRYGIAN_DEGREES_12;
-            palette_len = ArrayLen(PHRYGIAN_DEGREES_12);
+            palette     = PHRYGIAN_D12;
+            palette_len = ArrayLen(PHRYGIAN_D12);
             myMode      = HarmonicMode::Minor;
             break;
         case LYDIAN_ITEM:
-            palette     = LYDIAN_DEGREES_12;
-            palette_len = ArrayLen(LYDIAN_DEGREES_12);
+            palette     = LYDIAN_D12;
+            palette_len = ArrayLen(LYDIAN_D12);
             myMode      = HarmonicMode::Major;
             break;
         case MIXOLYDIAN_ITEM:
-            palette     = MIXOLYDIAN_DEGREES_12;
-            palette_len = ArrayLen(MIXOLYDIAN_DEGREES_12);
+            palette     = MIXOLYDIAN_D12;
+            palette_len = ArrayLen(MIXOLYDIAN_D12);
             myMode      = HarmonicMode::Major;
             break;
         case AEOLIAN_ITEM:
-            palette     = AEOLIAN_DEGREES_12;
-            palette_len = ArrayLen(AEOLIAN_DEGREES_12);
+            palette     = AEOLIAN_D12;
+            palette_len = ArrayLen(AEOLIAN_D12);
             myMode      = HarmonicMode::Minor;
             break;
         case LOCRIAN_ITEM:
-            palette     = LOCRIAN_DEGREES_12;
-            palette_len = ArrayLen(LOCRIAN_DEGREES_12);
+            palette     = LOCRIAN_D12;
+            palette_len = ArrayLen(LOCRIAN_D12);
             myMode      = HarmonicMode::Minor;
             break;
     }
@@ -173,6 +171,7 @@ void SetScaleIndex(ScaleIndex scaleIdx)
 // Menu Callbacks
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
 void SelectScaleCallback(void* context)
 {
     SetScaleIndex(static_cast<ScaleIndex>((int)context));
@@ -220,18 +219,18 @@ AbstractMenu::ItemConfig topItems[] = {
     {.type = AbstractMenu::ItemType::openUiPageItem,
      .text = "SCALE",
      .asOpenUiPageItem{&scaleMenu}},
-    {.type = AbstractMenu::ItemType::valueItem,
-     .text = "BASS",
-     .asMappedValueItem{&bassVol}},
-    {.type = AbstractMenu::ItemType::valueItem,
-     .text = "TENOR",
-     .asMappedValueItem{&tenorVol}},
-    {.type = AbstractMenu::ItemType::valueItem,
-     .text = "ALTO",
-     .asMappedValueItem{&altoVol}},
-    {.type = AbstractMenu::ItemType::valueItem,
-     .text = "SOPRANO",
-     .asMappedValueItem{&sopranoVol}},
+    // {.type = AbstractMenu::ItemType::valueItem,
+    //  .text = "BASS",
+    //  .asMappedValueItem{&bassVol}},
+    // {.type = AbstractMenu::ItemType::valueItem,
+    //  .text = "TENOR",
+    //  .asMappedValueItem{&tenorVol}},
+    // {.type = AbstractMenu::ItemType::valueItem,
+    //  .text = "ALTO",
+    //  .asMappedValueItem{&altoVol}},
+    // {.type = AbstractMenu::ItemType::valueItem,
+    //  .text = "SOPRANO",
+    //  .asMappedValueItem{&sopranoVol}},
     {.type                   = AbstractMenu::ItemType::callbackFunctionItem,
      .text                   = "RESET",
      .asCallbackFunctionItem = {ResetValuesCallback, nullptr}},
@@ -264,16 +263,8 @@ AbstractMenu::ItemConfig scaleItems[] = {
      .asCallbackFunctionItem = {SelectScaleCallback, (void*)LOCRIAN_ITEM}},
 };
 
-// //char buf[128];
-// void doDebug(const char *format, va_list args)
-// {
-//     // std::vsnprintf(buf, ArrayLen(buf), format, args);
-//     Logger<LOGGER_INTERNAL>::PrintV(format, args);
-//     //    hw.Print(buf);
-// }
-
-// Converts our current BPM to a clock frequency based on pulses per quarter note.
 ////////////////////////////////////////////////////////////////////////////////
+// Converts our current BPM to a clock frequency based on pulses per quarter note.
 inline float bpmToClockFreq(float bpm)
 { return (bpm * PPQN) / 60.0f; }
 
@@ -338,8 +329,8 @@ void AudioCallback(AudioHandle::InterleavingInputBuffer  in,
                 // Sequence loop boundary: previous cycle ended and pulse wrapped.
                 if(lastPulse >= 0 && pulse < lastPulse)
                 {
-                    SetScaleIndex(static_cast<ScaleIndex>(
-                        randomRange(0, static_cast<int>(SCALE_ITEM_COUNT))));
+                    // SetScaleIndex(static_cast<ScaleIndex>(
+                    //     randomRange(0, static_cast<int>(SCALE_ITEM_COUNT))));
                     makeEvents();
                 }
                 lastPulse = pulse;
@@ -513,8 +504,8 @@ int main(void)
     hw.Configure();
     hw.Init();
 
-    hw.StartLog(false);
-    hw.PrintLine("Happy Birthday!!!");
+//    hw.StartLog(false);
+//    hw.PrintLine("Happy Birthday!!!");
 
 
     // Init our music environment

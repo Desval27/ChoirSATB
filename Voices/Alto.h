@@ -28,12 +28,14 @@ using namespace Music;
 class TheAlto : public TheVoice
 {
   public:
-    TheAlto(const TimeSignature&   ts,
+    TheAlto(
+        const DaisySeed&       hw,
+        const TimeSignature&   ts,
             const TuningReference& tr,
             const Temperament&     t,
             const ScaleMap&        s)
             // -1 Relative to C4 = C3
-    : TheVoice(ts, tr, t, s, -1), _freq(0.0f)
+    : TheVoice(hw, ts, tr, t, s, -1), _freq(0.0f)
     {
         setWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY, ArrayLen(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY));
     }

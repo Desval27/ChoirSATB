@@ -28,12 +28,14 @@ using namespace Music;
 class TheTenor : public TheVoice
 {
   public:
-    TheTenor(const TimeSignature&   ts,
+    TheTenor(
+        const DaisySeed&       hw,
+        const TimeSignature&   ts,
             const TuningReference& tr,
             const Temperament&     t,
             const ScaleMap&        s)
             // -2 Relative to C4 = C2
-    : TheVoice(ts, tr, t, s, -2)
+    : TheVoice(hw, ts, tr, t, s, -2)
     {
         setWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY, ArrayLen(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY));
     }

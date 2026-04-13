@@ -31,21 +31,22 @@ class TheVoice
         Normal,
         Legato,
     };
-    // const TimeSignature*   _ts;
-    // const TuningReference* _tr;
-    // const Temperament*     _t;
-    // const ScaleMap*        _s;
-    // const float*           _weights;
-    // size_t                 _weightCount;
-    // PitchEngine            _pe;
-    // bool                   _gate;
 
-    TheVoice(const TimeSignature&   ts,
+    TheVoice(const DaisySeed&       hw,
+             const TimeSignature&   ts,
              const TuningReference& tr,
              const Temperament&     t,
              const ScaleMap&        s,
              int                    periodOffset = 0)
-    : eventsLen(0), _ts(&ts), _tr(&tr), _t(&t), _weightCount(0), _gate(false)
+    : hw(&hw),
+      eventsLen(0),
+      _ts(&ts),
+      _tr(&tr),
+      _t(&t),
+      _s(&s),
+      _weights(nullptr),
+      _weightCount(0),
+      _gate(false)
     {
         const float rootC4Hz
             = _t->frequencyFromReference(TemperedPitch(0, 0), *_tr);
@@ -72,11 +73,9 @@ class TheVoice
         }
     }
 
-    // void setDegrees(const Degree degrees[], uint16_t degreeCount)
-    // { scale.setDegrees(degrees, degreeCount); }
     void setWeights(const float weights[], size_t weightCount)
     {
-        _weights = weights;
+        _weights     = weights;
         _weightCount = weightCount;
     }
 
@@ -87,9 +86,10 @@ class TheVoice
     { return eventsLen = 0; }
 
   protected:
-    NoteEvent emptyNote;
-    NoteEvent events[128];
-    size_t    eventsLen;
+    const DaisySeed* hw;
+    NoteEvent        emptyNote;
+    NoteEvent        events[128];
+    size_t           eventsLen;
 
     // -------------------------------------------------------------------------
     bool getGate() const { return _gate; }
@@ -115,6 +115,20 @@ class TheVoice
         for(size_t i = 0; i < eventsLen; i++)
             totalPulses += static_cast<int>(events[i].value);
         return totalPulses;
+    }
+
+    /**
+     * @brief Gets the mapped degree for a given scale index, along with the period offset.
+     * 
+     * @param index 
+     * @param outPeriodOffset 
+     * @return Note 
+     */
+    Degree
+    getMappedDegreeFromRoot(Degree root, int index, int& outPeriodOffset) const
+    {
+        int rootIdx = _s->indexOfDegree(root);
+        return _s->mappedDegree(rootIdx + index, outPeriodOffset);
     }
 
     // -------------------------------------------------------------------------

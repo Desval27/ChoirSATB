@@ -28,12 +28,14 @@ using namespace Music;
 class TheSoprano : public TheVoice
 {
   public:
-    TheSoprano(const TimeSignature&   ts,
+    TheSoprano(
+        const DaisySeed&       hw,  
+        const TimeSignature&   ts,
                const TuningReference& tr,
                const Temperament&     t,
                const ScaleMap&        s)
     // 0 Relative to C4 = C4
-    : TheVoice(ts, tr, t, s, 0)
+    : TheVoice(hw, ts, tr, t, s, 0)
     {
         setWeights(SCALE_WEIGHTS_7_UNIFORM, ArrayLen(SCALE_WEIGHTS_7_UNIFORM));
     }
@@ -57,7 +59,7 @@ class TheSoprano : public TheVoice
         lfo.Init(sample_rate);
         lfo.SetWaveform(Oscillator::WAVE_TRI);
         lfo.SetAmp(1);
-        lfo.SetFreq(.4);
+        lfo.SetFreq(.2);
     }
 
     virtual float Process() override
