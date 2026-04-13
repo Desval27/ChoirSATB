@@ -1,9 +1,4 @@
 # ChoirSATB
 
-## Author pfburdette <paul.f.burdette@gmail.com>
+WIP
 
-<!-- Insert Your Name Here -->
-
-## Description
-
-<!-- Describe your example here -->
