@@ -37,49 +37,22 @@ class TheVoice
              const TuningReference& tr,
              const Temperament&     t,
              const ScaleMap&        s,
-             int                    periodOffset = 0)
-    : hw(&hw),
-      eventsLen(0),
-      _ts(&ts),
-      _tr(&tr),
-      _t(&t),
-      _s(&s),
-      _weights(nullptr),
-      _weightCount(0),
-      _gate(false)
-    {
-        const float rootC4Hz
-            = _t->frequencyFromReference(TemperedPitch(0, 0), *_tr);
-        const float voiceRootHz = rootC4Hz * _t->periodMultiplier(periodOffset);
-        _pe.setTemperament(_t);
-        _pe.setScaleMap(_s);
-        _pe.setRootHz(voiceRootHz);
-    }
+             int                    periodOffset = 0);
 
-    virtual void  Init(float sample_rate) = 0;
+    virtual void  Init(float sample_rate);
     virtual float Process()               = 0;
+    virtual void Update(); 
 
-    void doPulse(int pulse)
-    {
-        NoteEvent ne = getEventForPulse(pulse);
-        if(ne.note != REST && isEventRisingEdge(pulse))
-            _gate = true;
-        if(isEventFallingEdge(pulse))
-            _gate = false;
+    const char* GetNoteText() const { return _noteBuf; }
+    void        DoPulse(int pulse);
 
-        if(ne.note != REST)
-        {
-            handleNoteEvent(pulse, ne);
-        }
-    }
+    void SetWeights(const float weights[], size_t weightCount);
+    void SetAttack(float time) { env.SetTime(ADSR_SEG_ATTACK, time); }
+    void SetDecay(float time) { env.SetTime(ADSR_SEG_DECAY, time); }
+    void SetRelease(float time) { env.SetTime(ADSR_SEG_RELEASE, time); }
+    void SetSustainLevel(float level) { env.SetSustainLevel(level); }
 
-    void setWeights(const float weights[], size_t weightCount)
-    {
-        _weights     = weights;
-        _weightCount = weightCount;
-    }
-
-    virtual size_t makeEvents(TimeSignature& ts,
+    virtual size_t MakeEvents(TimeSignature& ts,
                               int            bars,
                               ChordEvent*    chordEvents,
                               size_t         chordEventsLen)
@@ -90,26 +63,27 @@ class TheVoice
     NoteEvent        emptyNote;
     NoteEvent        events[128];
     size_t           eventsLen;
+    Adsr             env;
 
     // -------------------------------------------------------------------------
-    bool getGate() const { return _gate; }
+    bool GetGate() const { return _gate; }
 
     // -------------------------------------------------------------------------
-    virtual void handleNoteEvent(int pulse, NoteEvent n) = 0;
+    virtual void HandleNoteEvent(int pulse, NoteEvent n) = 0;
 
     // -------------------------------------------------------------------------
-    float getFreqForNote(Note n, Period p, float fc = 0.0f) const
-    { return _pe.frequency(TemperedPitch(n, p, fc)); }
+    float GetFreqForNote(Note n, Period p, float fc = 0.0f) const
+    { return _pe.Frequency(TemperedPitch(n, p, fc)); }
 
     // -------------------------------------------------------------------------
-    Note getWeightedNote(float unitRandom, int& outPeriodOffset)
+    Note GetWeightedNote(float unitRandom, int& outPeriodOffset)
     {
-        return _s->getWeightedNote(
+        return _s->GetWeightedNote(
             unitRandom, outPeriodOffset, _weights, _weightCount);
     }
 
     // -------------------------------------------------------------------------
-    int getTotalEventPulses() const
+    int GetTotalEventPulses() const
     {
         int totalPulses = 0;
         for(size_t i = 0; i < eventsLen; i++)
@@ -125,151 +99,52 @@ class TheVoice
      * @return Note 
      */
     Degree
-    getMappedDegreeFromRoot(Degree root, int index, int& outPeriodOffset) const
+    GetMappedDegreeFromRoot(Degree root, int index, int& outPeriodOffset) const
     {
-        int rootIdx = _s->indexOfDegree(root);
-        return _s->mappedDegree(rootIdx + index, outPeriodOffset);
+        int rootIdx = _s->GetIndexOfDegree(root);
+        return _s->GetMappedDegree(rootIdx + index, outPeriodOffset);
     }
 
     // -------------------------------------------------------------------------
-    int getEventIndexForPulse(int pulse) const
-    { return findAssociatedEventIndex(pulse); }
+    int GetEventIndexForPulse(int pulse) const
+    { return FindAssociatedEventIndex(pulse); }
 
-    // -------------------------------------------------------------------------
-    bool isEventRisingEdge(int pulse) const
-    {
-        if(eventsLen == 0 || pulse < 0)
-            return false;
+    /**
+     * @brief Determines if the event at the given pulse is a rising edge, meaning the gate should be activated.
+     * 
+     * @param pulse 
+     * @return true 
+     * @return false 
+     */
+    bool IsEventRisingEdge(int pulse) const;
 
-        const int currentEventIdx = getEventIndexForPulse(pulse);
-        if(currentEventIdx < 0)
-            return false;
-
-        int previousPulse = pulse - 1;
-        if(pulse == 0)
-        {
-            const int totalPulses = getTotalEventPulses();
-            if(totalPulses > 0)
-                previousPulse = totalPulses - 1;
-        }
-
-        const int previousEventIdx = getEventIndexForPulse(previousPulse);
-        return currentEventIdx != previousEventIdx;
-    }
-
-    // -------------------------------------------------------------------------
-    bool isEventFallingEdge(int          pulse,
-                            Articulation articulation
-                            = Articulation::Normal) const
-    {
-        if(eventsLen == 0 || pulse < 0)
-            return false;
-
-        const int totalPulses = getTotalEventPulses();
-        if(totalPulses <= 0)
-            return false;
-
-        int previousPulse = pulse - 1;
-        if(pulse == 0)
-        {
-            if(totalPulses > 0)
-                previousPulse = totalPulses - 1;
-        }
-
-        const NoteEvent& currentEvent  = getEventForPulse(pulse);
-        const NoteEvent& previousEvent = getEventForPulse(previousPulse);
-
-        // Always release when the sequence transitions from note to rest.
-        if(previousEvent.note != REST && currentEvent.note == REST)
-            return true;
-
-        // Legato keeps the gate high between adjacent note events.
-        if(articulation == Articulation::Legato || currentEvent.note == REST)
-            return false;
-
-        const int eventIdx = getEventIndexForPulse(pulse);
-        if(eventIdx < 0 || eventIdx >= static_cast<int>(eventsLen))
-            return false;
-
-        const int eventStartPulse
-            = getEventStartPulse(static_cast<size_t>(eventIdx));
-        const int eventPulseOffset
-            = ((pulse % totalPulses) - eventStartPulse + totalPulses)
-              % totalPulses;
-        const int span = static_cast<int>(events[eventIdx].value);
-        if(span <= 1)
-            return true;
-
-        float gateFraction = 0.90f; // Normal articulation.
-        if(articulation == Articulation::Staccato)
-            gateFraction = 0.55f;
-
-        int releasePulseOffset = static_cast<int>(span * gateFraction);
-        if(releasePulseOffset < 0)
-            releasePulseOffset = 0;
-        if(releasePulseOffset > (span - 1))
-            releasePulseOffset = span - 1;
-
-        return eventPulseOffset == releasePulseOffset;
-    }
-
-    // -------------------------------------------------------------------------
+    /**
+     * @brief Determines if the event at the given pulse is a falling edge, meaning the gate should be released.
+     * 
+     * @param pulse 
+     * @param articulation 
+     * @return true 
+     * @return false 
+     */
     bool IsEventFallingEdge(int          pulse,
                             Articulation articulation
-                            = Articulation::Normal) const
-    { return isEventFallingEdge(pulse, articulation); }
+                            = Articulation::Normal) const;
 
-    // -------------------------------------------------------------------------
-    const Music::NoteEvent& getEventForPulse(int pulse) const
-    {
-        int eventIdx = findAssociatedEventIndex(pulse);
-        if(eventIdx >= 0 && eventIdx < static_cast<int>(eventsLen))
-            return events[eventIdx];
-        return emptyNote;
-    }
+    const Music::NoteEvent& GetEventForPulse(int pulse) const;
 
   private:
     const TimeSignature*   _ts;
     const TuningReference* _tr;
     const Temperament*     _t;
     const ScaleMap*        _s;
+    int                    _periodOffset;
     const float*           _weights;
     size_t                 _weightCount;
     PitchEngine            _pe;
     bool                   _gate;
+    NoteEvent              _currentNote;
+    char                   _noteBuf[16];
 
-    // -------------------------------------------------------------------------
-    int getEventStartPulse(size_t eventIndex) const
-    {
-        int pulseCursor = 0;
-        for(size_t i = 0; i < eventIndex && i < eventsLen; i++)
-            pulseCursor += static_cast<int>(events[i].value);
-        return pulseCursor;
-    }
-
-    // -------------------------------------------------------------------------
-    int findAssociatedEventIndex(int pulse) const
-    {
-        if(eventsLen == 0 || pulse < 0)
-            return -1;
-
-        int totalPulses = getTotalEventPulses();
-
-        if(totalPulses <= 0)
-            return -1;
-
-        const int normalizedPulse = pulse % totalPulses;
-
-        int pulseCursor = 0;
-        for(size_t i = 0; i < eventsLen; i++)
-        {
-            const int span = static_cast<int>(events[i].value);
-            if(normalizedPulse < (pulseCursor + span))
-                return static_cast<int>(i);
-
-            pulseCursor += span;
-        }
-
-        return static_cast<int>(eventsLen - 1);
-    }
+    int GetEventStartPulse(size_t eventIndex) const;
+    int FindAssociatedEventIndex(int pulse) const;
 };

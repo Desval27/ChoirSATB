@@ -37,31 +37,25 @@ class TheTenor : public TheVoice
             // -2 Relative to C4 = C2
     : TheVoice(hw, ts, tr, t, s, -2)
     {
-        setWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY, ArrayLen(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY));
+        SetWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY, ArrayLen(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY));
     }
 
     virtual void Init(float sample_rate) override
     {
+        TheVoice::Init(sample_rate);
+        
         osc.Init(sample_rate);
         osc.SetWaveform(osc.WAVE_TRI);
-
-        //Set envelope parameters
-        env.Init(sample_rate);
-        env.SetTime(ADSR_SEG_ATTACK, .1);
-        env.SetTime(ADSR_SEG_DECAY, .1);
-        env.SetTime(ADSR_SEG_RELEASE, .1);
-
-        env.SetSustainLevel(.70);
     }
 
     virtual float Process() override
     {
-        float env_out = env.Process(getGate());
+        float env_out = env.Process(GetGate());
         osc.SetAmp(env_out);
         return osc.Process();
     }
 
-    virtual size_t makeEvents(Music::TimeSignature& ts,
+    virtual size_t MakeEvents(Music::TimeSignature& ts,
                               int                   bars,
                               Music::ChordEvent*    chordEvents,
                               size_t                chordEventsLen) override
@@ -71,7 +65,7 @@ class TheTenor : public TheVoice
         float     density = randomRange(0.6, 0.9);
         NoteValue g       = NoteValue::Quarter;
         size_t    patternLen
-            = generatePattern(ts, bars, density, g, pattern, ArrayLen(pattern));
+            = GeneratePattern(ts, bars, density, g, pattern, ArrayLen(pattern));
 
         eventsLen = 0;
         for(size_t i = 0; i < patternLen && eventsLen < ArrayLen(events); i++)
@@ -81,7 +75,7 @@ class TheTenor : public TheVoice
 
             if(pattern[i]) // Hit
             {
-                events[eventsLen].note = getWeightedNote(r, periodOffset);
+                events[eventsLen].note = GetWeightedNote(r, periodOffset);
                 events[eventsLen].period = periodOffset;
                 events[eventsLen].value  = g;
             }
@@ -98,10 +92,9 @@ class TheTenor : public TheVoice
     }
 
   protected:
-    virtual void handleNoteEvent(int pulse, NoteEvent ne) override
-    { osc.SetFreq(getFreqForNote(ne.note, ne.period)); }
+    virtual void HandleNoteEvent(int pulse, NoteEvent ne) override
+    { osc.SetFreq(GetFreqForNote(ne.note, ne.period)); }
 
   private:
     Oscillator osc;
-    Adsr       env;
 };

@@ -16,7 +16,12 @@ MONKEY_SRCS = \
 	$(MONKEY_DIR)/Euclid.cpp
 
 # Sources
-CPP_SOURCES = Main.cpp $(MONKEY_SRCS)
+CPP_SOURCES = \
+	Main.cpp \
+	Menu.cpp \
+	Voices/Voice.cpp \
+	$(MONKEY_SRCS)
+	
 C_DEFS += -DUSE_DEBUG=$(USE_DEBUG) -DDAISY_PLATFORM=$(DAISY_PLATFORM) -Wno-unused-variable
 OPT = -Os
 C_INCLUDES += -I$(MONKEY_DIR)

@@ -28,52 +28,31 @@ using namespace Music;
 class TheSoprano : public TheVoice
 {
   public:
-    TheSoprano(
-        const DaisySeed&       hw,  
-        const TimeSignature&   ts,
+    TheSoprano(const DaisySeed&       hw,
+               const TimeSignature&   ts,
                const TuningReference& tr,
                const Temperament&     t,
                const ScaleMap&        s)
     // 0 Relative to C4 = C4
     : TheVoice(hw, ts, tr, t, s, 0)
-    {
-        setWeights(SCALE_WEIGHTS_7_UNIFORM, ArrayLen(SCALE_WEIGHTS_7_UNIFORM));
-    }
+    { SetWeights(SCALE_WEIGHTS_7_UNIFORM, ArrayLen(SCALE_WEIGHTS_7_UNIFORM)); }
 
     virtual void Init(float sample_rate) override
     {
+        TheVoice::Init(sample_rate);
+
         osc.Init(sample_rate);
-        osc.SetWaveform(osc.WAVE_SAW);
-
-        //Set envelope parameters
-        env.Init(sample_rate);
-        env.SetTime(ADSR_SEG_ATTACK, .1);
-        env.SetTime(ADSR_SEG_DECAY, .2);
-        env.SetTime(ADSR_SEG_RELEASE, .2);
-        env.SetSustainLevel(.70);
-
-        flt.Init(sample_rate);
-        flt.SetRes(0.7);
-
-        // set parameters for sine oscillator object
-        lfo.Init(sample_rate);
-        lfo.SetWaveform(Oscillator::WAVE_TRI);
-        lfo.SetAmp(1);
-        lfo.SetFreq(.2);
+        osc.SetWaveform(osc.WAVE_TRI);
     }
 
     virtual float Process() override
     {
-        float env_out = env.Process(getGate());
+        float env_out = env.Process(GetGate());
         osc.SetAmp(env_out);
-
-        float freq = 5000 + (lfo.Process() * 5000);
-
-        flt.SetFreq(freq);
-        return flt.Process(osc.Process());
+        return osc.Process();
     }
 
-    virtual size_t makeEvents(Music::TimeSignature& ts,
+    virtual size_t MakeEvents(Music::TimeSignature& ts,
                               int                   bars,
                               Music::ChordEvent*    chordEvents,
                               size_t                chordEventsLen) override
@@ -82,7 +61,7 @@ class TheSoprano : public TheVoice
         bool            pattern[128];
         const float     density    = randomRange(0.4f, 0.8f); //0.50f;
         const NoteValue g          = NoteValue::Eighth;
-        size_t          patternLen = Music::generatePattern(
+        size_t          patternLen = Music::GeneratePattern(
             ts, bars, density, g, pattern, ArrayLen(pattern));
 
         eventsLen = 0;
@@ -93,7 +72,7 @@ class TheSoprano : public TheVoice
 
             if(pattern[i]) // Hit
             {
-                events[eventsLen].note = getWeightedNote(r, periodOffset);
+                events[eventsLen].note   = GetWeightedNote(r, periodOffset);
                 events[eventsLen].period = periodOffset;
                 events[eventsLen].value  = g;
             }
@@ -109,13 +88,10 @@ class TheSoprano : public TheVoice
     }
 
   protected:
-    virtual void handleNoteEvent(int pulse, NoteEvent ne) override
-    { osc.SetFreq(getFreqForNote(ne.note, ne.period)); }
+    virtual void HandleNoteEvent(int pulse, NoteEvent ne) override
+    { osc.SetFreq(GetFreqForNote(ne.note, ne.period)); }
 
 
   private:
     Oscillator osc;
-    Oscillator lfo;
-    MoogLadder flt;
-    Adsr       env;
 };

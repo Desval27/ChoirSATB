@@ -36,31 +36,26 @@ class TheBass : public TheVoice
     // -3 Relative to C4 = C1
     : TheVoice(hw, ts, tr, t, s, -3)
     {
-        setWeights(SCALE_WEIGHTS_7_TONIC_HEAVY,
+        SetWeights(SCALE_WEIGHTS_7_TONIC_HEAVY,
                    ArrayLen(SCALE_WEIGHTS_7_TONIC_HEAVY));
     }
 
     virtual void Init(float sample_rate) override
     {
+        TheVoice::Init(sample_rate);
+
         osc.Init(sample_rate);
         osc.SetWaveform(osc.WAVE_TRI);
-
-        //Set envelope parameters
-        env.Init(sample_rate);
-        env.SetTime(ADSR_SEG_ATTACK, .1);
-        env.SetTime(ADSR_SEG_DECAY, .4);
-        env.SetTime(ADSR_SEG_RELEASE, .1);
-        env.SetSustainLevel(.70);
     }
 
     virtual float Process() override
     {
-        float env_out = env.Process(getGate());
+        float env_out = env.Process(GetGate());
         osc.SetAmp(env_out);
         return osc.Process();
     }
 
-    virtual size_t makeEvents(Music::TimeSignature& ts,
+    virtual size_t MakeEvents(Music::TimeSignature& ts,
                               int                   bars,
                               Music::ChordEvent*    chordEvents,
                               size_t                chordEventsLen) override
@@ -96,10 +91,10 @@ class TheBass : public TheVoice
 
                     // Randomly choose between the 4th and 5th for the second note.
                     if(random() % 2 == 0)
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 3, periodOffset);
                     else
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 4, periodOffset);
                     events[eventsLen].period = periodOffset;
                     events[eventsLen].value  = len1;
@@ -118,30 +113,30 @@ class TheBass : public TheVoice
 
                     // Randomly choose between the 4th and 5th for the second note.
                     if(random() % 2 == 0)
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 3, periodOffset);
                     else
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 4, periodOffset);
                     events[eventsLen].period = periodOffset;
                     events[eventsLen].value  = len1;
                     eventsLen++;
 
                     if(random() % 2 == 0)
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 2, periodOffset);
                     else
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 4, periodOffset);
                     events[eventsLen].period = periodOffset;
                     events[eventsLen].value  = len1;
                     eventsLen++;
 
                     if(random() % 2 == 0)
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 3, periodOffset);
                     else
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 4, periodOffset);
                     events[eventsLen].period = periodOffset;
                     events[eventsLen].value  = len1;
@@ -161,10 +156,10 @@ class TheBass : public TheVoice
 
                     // Randomly choose between the 4th and 5th for the second note.
                     if(random() % 2 == 0)
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 3, periodOffset);
                     else
-                        events[eventsLen].note = getMappedDegreeFromRoot(
+                        events[eventsLen].note = GetMappedDegreeFromRoot(
                             chordEvents[i].root, 4, periodOffset);
                     events[eventsLen].period = periodOffset;
                     events[eventsLen].value  = len2;
@@ -175,11 +170,12 @@ class TheBass : public TheVoice
         return eventsLen;
     }
 
+    void SetWaveform(const int wf) { osc.SetWaveform(wf); }
+
   protected:
-    virtual void handleNoteEvent(int pulse, NoteEvent ne) override
-    { osc.SetFreq(getFreqForNote(ne.note, ne.period)); }
+    virtual void HandleNoteEvent(int pulse, NoteEvent ne) override
+    { osc.SetFreq(GetFreqForNote(ne.note, ne.period)); }
 
   private:
     Oscillator osc;
-    Adsr       env;
 };
