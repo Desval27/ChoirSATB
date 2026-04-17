@@ -1,5 +1,5 @@
 TARGET = ChoirSATB
-# APP_TYPE = BOOT_QSPI
+#APP_TYPE = BOOT_QSPI
 
 USE_DAISYSP_LGPL = 1
 USE_DEBUG = 0
@@ -26,8 +26,9 @@ CPP_SOURCES = \
 	$(MONKEY_SRCS)
 	
 C_DEFS += -DUSE_DEBUG=$(USE_DEBUG) -DDAISY_PLATFORM=$(DAISY_PLATFORM) -Wno-unused-variable
+#OPT = -Og 
 OPT = -Os
-C_INCLUDES += -I./ -I$(MONKEY_DIR)
+C_INCLUDES += -I. -I$(MONKEY_DIR)
 
 
 # Core location, and generic Makefile.

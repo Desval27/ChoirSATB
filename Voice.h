@@ -72,6 +72,7 @@ class TheVoice
     }
 
     void DoPulse(int pulse);
+    bool GetGate() const { return _gate; }
 
     int8_t       GetWaveform() const { return config.waveform.Get(); }
     virtual void SetWaveform(const int8_t value) 
@@ -79,6 +80,12 @@ class TheVoice
         config.waveform.Set(value);
         osc.SetWaveform(config.waveform.Get()); 
     }
+
+    float GetVolume() const { return config.volume.Get(); }
+    float GetVolumeAs0to1() const { return config.volume.GetAs0to1(); }
+    void SetVolume(float value) { config.volume.Set(value); }
+    void SetVolumeAs0to1(float value) { config.volume.SetFrom0to1(value); }
+    void AppendVolumeToString(daisy::FixedCapStrBase<char>& string) const { config.volume.AppentToString(string); }
 
     void SetWeights(const float weights[], size_t weightCount);
 
@@ -133,8 +140,6 @@ class TheVoice
     daisysp::Oscillator osc;
     daisysp::MoogLadder flt;
     daisysp::Adsr       ampEnv;
-
-    bool GetGate() const { return _gate; }
 
     virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne);
 

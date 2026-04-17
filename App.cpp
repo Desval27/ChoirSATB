@@ -17,7 +17,7 @@ TheApp &TheApp::instance(int bars)
 /// @param hw
 /// @param bars
 TheApp::TheApp(int bars)
-: gnome(_ts, bars),
+: _gnome(_ts, bars),
   _refA4(440.0f, 9, 0),
   _running(false),
   _scaleIndex(0),
@@ -51,6 +51,14 @@ void TheApp::Init(float sample_rate)
     {
         _voices[i]->Init(sample_rate);
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief
+/// @param delta
+void TheApp::AdjustBPM(int delta)
+{
+    _config.bpm.Step(delta, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -103,16 +111,18 @@ void TheApp::SetScaleIndex(int value)
     _s.SetDegrees(SCALE_TABLES[_scaleIndex].degrees,
                   SCALE_TABLES[_scaleIndex].degreeCount);
     MakeEvents();
-    gnome.Reset();
+    _gnome.Reset();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param pulse
-void TheApp::DoPulse(int pulse)
+int TheApp::DoPulse()
 {
+    int pulse = _gnome.DoPulse();
     for(int i = 0; i < NUM_VOICES; i++)
     {
         _voices[i]->DoPulse(pulse);
     }
+    return pulse;
 }

@@ -45,6 +45,7 @@ bool VoicePage::OnCancelButton(uint8_t numberOfPresses, bool isRetriggering)
     Close();
     return true;
 }
+
 void VoicePage::Draw(const UiCanvasDescriptor& canvas)
 {
     const FontDef& TitleFont    = Font_11x18;

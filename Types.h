@@ -91,6 +91,7 @@ struct AdsrConfig
 struct VoiceConfig
 {
     daisy::MappedIntValue   periodOffset;
+    daisy::MappedFloatValue volume;
     daisy::MappedIntValue   waveform;
     AdsrConfig              lpfAdsr;
     daisy::MappedFloatValue lpf;
@@ -106,6 +107,7 @@ struct VoiceConfig
                 float  sustain,
                 float  release)
     : periodOffset(-5, 5, periodOffset, 1, 1, "O", true),
+      volume(0, 1.0, 1.0, daisy::MappedFloatValue::Mapping::log, "dB", 2, false),
       waveform(0,
                daisysp::Oscillator::WAVE_LAST,
                daisysp::Oscillator::WAVE_TRI,

@@ -31,23 +31,31 @@ class TheApp
         NUM_VOICES
     };
 
-    Gnome gnome;
 
     void Init(float sample_rate);
 
-    void   DoPulse(int pulse);
     size_t MakeChordEvents(ChordEvent *eventsOut, size_t eventsOutLen);
     void   MakeEvents();
 
+    int  DoPulse();
+    int  GetBeat() const { return _gnome.GetBeat(); }
+    int  GetBar() const { return _gnome.GetBar(); }
+    int  GetBPM() const { return _config.bpm.Get(); }
+    void AdjustBPM(int delta);
+    void AppendVolumeToString(daisy::FixedCapStrBase<char>& string) const { _config.bpm.AppentToString(string); }
+
+    bool GetRunning() const { return _running; }
+    void SetRunning(bool value) { _running = value; }
+    void ToggleRunning() { _running = !_running; }
+
     TheVoice *           GetVoice(int index) { return _voices[index]; }
     const TimeSignature *GetTS() const { return &_ts; }
-    bool                 GetRunning() const { return _running; }
-    void                 SetRunning(bool value) { _running = value; }
     int                  GetScaleIndex() const { return _scaleIndex; }
     void                 SetScaleIndex(int value);
 
   private:
     SystemConfig          _config;
+    Gnome                 _gnome;
     const TuningReference _refA4;
     const TimeSignature   _ts;
     Temperament           _t;
