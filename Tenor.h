@@ -21,50 +21,34 @@
 
 #include "Voice.h"
 
-using namespace daisysp;
-using namespace daisy;
-using namespace Music;
-
+////////////////////////////////////////////////////////////////////////////////
+/// @brief
 class TheTenor : public TheVoice
 {
   public:
-    TheTenor(
-        const DaisySeed&       hw,
-        const TimeSignature&   ts,
-            const TuningReference& tr,
-            const Temperament&     t,
-            const ScaleMap&        s)
-            // -2 Relative to C4 = C2
-    : TheVoice(hw, ts, tr, t, s, -2)
+    TheTenor(const Music::TimeSignature&   ts,
+             const Music::TuningReference& tr,
+             const Music::Temperament&     t,
+             const Music::ScaleMap&        s)
+    // -2 Relative to C4 = C2
+    : TheVoice(ts, tr, t, s, -2, 0.2, 0.2, 0.4, 0.2)
     {
-        SetWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY, ArrayLen(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY));
+        SetWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY,
+                   ArrayLen(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY));
     }
 
-    virtual void Init(float sample_rate) override
-    {
-        TheVoice::Init(sample_rate);
-        
-        osc.Init(sample_rate);
-        osc.SetWaveform(osc.WAVE_TRI);
-    }
+    virtual const char* GetName() const override { return s_TENOR; }
 
-    virtual float Process() override
-    {
-        float env_out = env.Process(GetGate());
-        osc.SetAmp(env_out);
-        return osc.Process();
-    }
-
-    virtual size_t MakeEvents(Music::TimeSignature& ts,
-                              int                   bars,
-                              Music::ChordEvent*    chordEvents,
-                              size_t                chordEventsLen) override
+    virtual size_t MakeEvents(const Music::TimeSignature& ts,
+                              int                         bars,
+                              Music::ChordEvent*          chordEvents,
+                              size_t chordEventsLen) override
     {
         // First start with our "hit" pattern
-        bool      pattern[128];
-        float     density = randomRange(0.6, 0.9);
-        NoteValue g       = NoteValue::Quarter;
-        size_t    patternLen
+        bool             pattern[128];
+        float            density = randomRange(0.6, 0.9);
+        Music::NoteValue g       = Music::NoteValue::Quarter;
+        size_t           patternLen
             = GeneratePattern(ts, bars, density, g, pattern, ArrayLen(pattern));
 
         eventsLen = 0;
@@ -75,7 +59,7 @@ class TheTenor : public TheVoice
 
             if(pattern[i]) // Hit
             {
-                events[eventsLen].note = GetWeightedNote(r, periodOffset);
+                events[eventsLen].note   = GetWeightedNote(r, periodOffset);
                 events[eventsLen].period = periodOffset;
                 events[eventsLen].value  = g;
             }
@@ -90,11 +74,4 @@ class TheTenor : public TheVoice
         // debugNoteEvents(ts, events, eventsLen);
         return eventsLen;
     }
-
-  protected:
-    virtual void HandleNoteEvent(int pulse, NoteEvent ne) override
-    { osc.SetFreq(GetFreqForNote(ne.note, ne.period)); }
-
-  private:
-    Oscillator osc;
 };

@@ -5,6 +5,12 @@
 		},
 		{
 			"path": "../../../Monkey"
+		},
+		{
+			"path": "../../libDaisy/examples"
+		},
+		{
+			"path": "../../seed"
 		}
 	],
 	"settings": {}

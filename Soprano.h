@@ -21,48 +21,34 @@
 
 #include "Voice.h"
 
-using namespace daisysp;
-using namespace daisy;
-using namespace Music;
-
+////////////////////////////////////////////////////////////////////////////////
+/// @brief
 class TheSoprano : public TheVoice
 {
   public:
-    TheSoprano(const DaisySeed&       hw,
-               const TimeSignature&   ts,
-               const TuningReference& tr,
-               const Temperament&     t,
-               const ScaleMap&        s)
+    TheSoprano(const Music::TimeSignature&   ts,
+               const Music::TuningReference& tr,
+               const Music::Temperament&     t,
+               const Music::ScaleMap&        s)
     // 0 Relative to C4 = C4
-    : TheVoice(hw, ts, tr, t, s, 0)
-    { SetWeights(SCALE_WEIGHTS_7_UNIFORM, ArrayLen(SCALE_WEIGHTS_7_UNIFORM)); }
-
-    virtual void Init(float sample_rate) override
+    : TheVoice(ts, tr, t, s, 0, 0.1, 0.3, 0.6, 0.3)
     {
-        TheVoice::Init(sample_rate);
-
-        osc.Init(sample_rate);
-        osc.SetWaveform(osc.WAVE_TRI);
+        SetWeights(SCALE_WEIGHTS_7_UNIFORM, ArrayLen(SCALE_WEIGHTS_7_UNIFORM));
     }
 
-    virtual float Process() override
-    {
-        float env_out = env.Process(GetGate());
-        osc.SetAmp(env_out);
-        return osc.Process();
-    }
+    virtual const char* GetName() const override { return s_SOPRANO; }
 
-    virtual size_t MakeEvents(Music::TimeSignature& ts,
-                              int                   bars,
-                              Music::ChordEvent*    chordEvents,
-                              size_t                chordEventsLen) override
+    virtual size_t MakeEvents(const Music::TimeSignature& ts,
+                              int                         bars,
+                              Music::ChordEvent*          chordEvents,
+                              size_t chordEventsLen) override
     {
         // First start with our "hit" pattern
-        bool            pattern[128];
-        const float     density    = randomRange(0.4f, 0.8f); //0.50f;
-        const NoteValue g          = NoteValue::Eighth;
-        size_t          patternLen = Music::GeneratePattern(
-            ts, bars, density, g, pattern, ArrayLen(pattern));
+        bool                   pattern[128];
+        const float            density = randomRange(0.4f, 0.8f); //0.50f;
+        const Music::NoteValue g       = Music::NoteValue::Eighth;
+        size_t                 patternLen
+            = GeneratePattern(ts, bars, density, g, pattern, ArrayLen(pattern));
 
         eventsLen = 0;
         for(size_t i = 0; i < patternLen && eventsLen < ArrayLen(events); i++)
@@ -86,12 +72,4 @@ class TheSoprano : public TheVoice
         }
         return eventsLen;
     }
-
-  protected:
-    virtual void HandleNoteEvent(int pulse, NoteEvent ne) override
-    { osc.SetFreq(GetFreqForNote(ne.note, ne.period)); }
-
-
-  private:
-    Oscillator osc;
 };

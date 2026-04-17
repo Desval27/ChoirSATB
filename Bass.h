@@ -25,40 +25,28 @@ using namespace daisysp;
 using namespace daisy;
 using namespace Music;
 
+////////////////////////////////////////////////////////////////////////////////
+/// @brief
 class TheBass : public TheVoice
 {
   public:
-    TheBass(const DaisySeed&       hw,
-            const TimeSignature&   ts,
+    TheBass(const TimeSignature&   ts,
             const TuningReference& tr,
             const Temperament&     t,
             const ScaleMap&        s)
     // -3 Relative to C4 = C1
-    : TheVoice(hw, ts, tr, t, s, -3)
+    : TheVoice(ts, tr, t, s, -3, 0.3, 0.1, 0.7, 0.2)
     {
         SetWeights(SCALE_WEIGHTS_7_TONIC_HEAVY,
                    ArrayLen(SCALE_WEIGHTS_7_TONIC_HEAVY));
     }
 
-    virtual void Init(float sample_rate) override
-    {
-        TheVoice::Init(sample_rate);
+    virtual const char* GetName() const override { return s_BASS; }
 
-        osc.Init(sample_rate);
-        osc.SetWaveform(osc.WAVE_TRI);
-    }
-
-    virtual float Process() override
-    {
-        float env_out = env.Process(GetGate());
-        osc.SetAmp(env_out);
-        return osc.Process();
-    }
-
-    virtual size_t MakeEvents(Music::TimeSignature& ts,
-                              int                   bars,
-                              Music::ChordEvent*    chordEvents,
-                              size_t                chordEventsLen) override
+    virtual size_t MakeEvents(const TimeSignature& ts,
+                              int                  bars,
+                              ChordEvent*          chordEvents,
+                              size_t               chordEventsLen) override
     {
         // A direct rhythmic copy test for now.
         eventsLen = 0;
@@ -170,12 +158,4 @@ class TheBass : public TheVoice
         return eventsLen;
     }
 
-    void SetWaveform(const int wf) { osc.SetWaveform(wf); }
-
-  protected:
-    virtual void HandleNoteEvent(int pulse, NoteEvent ne) override
-    { osc.SetFreq(GetFreqForNote(ne.note, ne.period)); }
-
-  private:
-    Oscillator osc;
 };

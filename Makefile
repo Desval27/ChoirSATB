@@ -1,5 +1,5 @@
 TARGET = ChoirSATB
-APP_TYPE = BOOT_QSPI
+# APP_TYPE = BOOT_QSPI
 
 USE_DAISYSP_LGPL = 1
 USE_DEBUG = 0
@@ -18,7 +18,7 @@ MONKEY_SRCS = \
 # Sources
 CPP_SOURCES = \
 	Main.cpp \
-	Menu.cpp \
+	App.cpp \
 	Voices/Voice.cpp \
 	$(MONKEY_SRCS)
 	

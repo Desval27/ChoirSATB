@@ -12,7 +12,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/../../libDaisy//**",
-                "${workspaceFolder}/../../DaisySP//**"
+                "${workspaceFolder}/../../DaisySP//**",
+                "G:/My Drive/Projects/Monkey"
             ],
             "name": "Win32",
             "windowsSdkVersion": "10.0.17763.0",
