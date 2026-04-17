@@ -6,8 +6,9 @@
 #include <Music/Tables.h>
 #include <Music/Gnome.h>
 
-#include "App.h"
-#include "VoiceMenu.h"
+#include <App.h>
+#include <Pages/MainPage.h>
+#include <Pages/VoicePage.h>
 
 using namespace daisysp;
 using namespace daisy;
@@ -52,9 +53,7 @@ struct ButtonBackend
 {
     Switch* buttons;
     bool    IsButtonPressed(uint16_t buttonID)
-    {
-        return buttons[buttonID].Pressed();
-    }
+    { return buttons[buttonID].Pressed(); }
 };
 ButtonBackend                           buttonBackend;
 Switch                                  buttons[BTN_COUNT];
@@ -92,179 +91,12 @@ MappedFloatValue voiceVolumes[theApp.NUM_VOICES] = {
 };
 
 UI                 ui;
+MainPage           mainPage;
+VoicePage          bassPage(TheApp::THE_BASS);
+VoicePage          tenorPage(TheApp::THE_TENOR);
+VoicePage          altoPage(TheApp::THE_ALTO);
+VoicePage          sopranoPage(TheApp::THE_SOPRANO);
 FullScreenItemMenu mainMenu;
-VoiceMenuPage      bassPage(TheApp::THE_BASS);
-VoiceMenuPage      tenorPage(TheApp::THE_TENOR);
-VoiceMenuPage      altoPage(TheApp::THE_ALTO);
-VoiceMenuPage      sopranoPage(TheApp::THE_SOPRANO);
-
-class MainPage : public UiPage
-{
-  public:
-    MainPage() {}
-
-    bool OnMenuEncoderTurned(int16_t  turns,
-                             uint16_t stepsPerRevolution) override
-    {
-        bpm = bpm.Get() + turns;
-        return true;
-    }
-
-    bool OnPotMoved(uint16_t potID, float newPosition) override
-    {
-        voiceVolumes[potID].Set(newPosition * 100.0f);
-        return true;
-    }
-
-    // Buttons doing double duty based on page context.
-    bool OnOkayButton(uint8_t numberOfPresses, bool isRetriggering) override
-    {
-        if(numberOfPresses > 0)
-        {
-            ui.OpenPage(mainMenu);
-        }
-        return true;
-    }
-
-    bool OnCancelButton(uint8_t numberOfPresses, bool isRetriggering) override
-    {
-        if(numberOfPresses > 0)
-        {
-            theApp.SetScaleIndex(
-                randomRange(D12StartIndex, D12StartIndex + D12Count));
-            theApp.gnome.Reset();
-        }
-        return true;
-    }
-
-    bool OnButton(uint16_t buttonID,
-                  uint8_t  numberOfPresses,
-                  bool     isRetriggering) override
-    {
-        if(numberOfPresses > 0)
-        {
-            switch(buttonID)
-            {
-                case BTN_RUN_STOP:
-                    theApp.SetRunning(!theApp.GetRunning());
-                    break;
-            }
-        }
-        return true;
-    }
-
-    bool OnArrowButton(ArrowButtonType arrowType,
-                       uint8_t         numberOfPresses,
-                       bool            isRetriggering) override
-    {
-        if(numberOfPresses > 0)
-        {
-            switch(arrowType)
-            {
-                case ArrowButtonType::left:
-                    theApp.SetScaleIndex(theApp.GetScaleIndex() - 1);
-                    break;
-                case ArrowButtonType::right:
-                    theApp.SetScaleIndex(theApp.GetScaleIndex() + 1);
-                    break;
-                case ArrowButtonType::up: break;
-                case ArrowButtonType::down: break;
-            }
-        }
-        return true;
-    }
-
-    // inherited from UiPage
-    void Draw(const UiCanvasDescriptor& canvas) override
-    {
-        char  txtBuf[64];
-        auto* d = static_cast<MyDisplay*>(canvas.handle_);
-
-        d->Fill(false);
-
-        // if(beatFlash)
-        // {
-        //     d->DrawRect(0, 0, d->Width() - 1, d->Height() - 1, true);
-        // }
-
-        //////////////////////////////////////////////
-        // Current Screen Layout  (WIP)
-        //  128x64px
-        //
-        //  +-----------------+
-        //  | 1/4   120   1:2 |  20px
-        //  |      IONIAN     |  20px
-        //  | X           X   |
-        //  | X   X   X   X   |  Remainder = 64 - 40 = 24px;
-        //  | B   T   A   S   |  Each 32px wide total; bars 16px?
-        //  +-----------------+
-        //
-
-        const int line1X = 2;
-        const int line1Y = 1;
-        const int line2X = 2;
-        const int line2Y = line1Y + Font_11x18.FontHeight;
-        const int line3Y = line2Y + Font_7x10.FontHeight;
-
-        const int voiceWidth = d->Width() / theApp.NUM_VOICES;
-        const int voiceLineY = d->Height() - Font_6x8.FontHeight - 4;
-        const int voiceStartX[theApp.NUM_VOICES] = {
-            (voiceWidth * 0) + 6,
-            (voiceWidth * 1) + 6,
-            (voiceWidth * 2) + 6,
-            (voiceWidth * 3) + 6,
-        };
-
-        const int barWidth                     = voiceWidth / 2;
-        const int barEndY                      = voiceLineY - 2;
-        const int barFullHeight                = barEndY - line3Y;
-        const int barStartX[theApp.NUM_VOICES] = {
-            (voiceWidth * 0) + (barWidth / 2),
-            (voiceWidth * 1) + (barWidth / 2),
-            (voiceWidth * 2) + (barWidth / 2),
-            (voiceWidth * 3) + (barWidth / 2),
-        };
-
-        // Line 1: Time Signature, BPM, Bar & Beat
-        d->SetCursor(line1X, line1Y);
-        snprintf(txtBuf,
-                 sizeof(txtBuf),
-                 "%2d/%-2d %2d:%-2d",
-                 theApp.GetTS()->beats,
-                 theApp.GetTS()->GetDenominator(),
-                 theApp.gnome.GetBar() + 1,
-                 theApp.gnome.GetBeat() + 1);
-        d->WriteString(txtBuf, Font_11x18, true);
-
-        d->SetCursor(line2X, line2Y);
-        snprintf(txtBuf,
-                 sizeof(txtBuf),
-                 "%-10s BPM:%3d",
-                 SCALE_TABLES[theApp.GetScaleIndex()].name,
-                 bpm.Get());
-        d->WriteString(txtBuf, Font_7x10, true);
-
-        // Now a line with all the voices current status
-        for(int i = 0; i < theApp.NUM_VOICES; i++)
-        {
-            int barHeight
-                = (int)(voiceVolumes[i].Get() / 100.0f * barFullHeight);
-            int barStartY = barEndY - barHeight;
-            d->DrawRect(barStartX[i],
-                        barStartY,
-                        barStartX[i] + barWidth,
-                        barEndY,
-                        true,
-                        true);
-            d->SetCursor(voiceStartX[i], voiceLineY);
-            d->WriteString(theApp.GetVoice(i)->GetNoteText(), Font_6x8, true);
-        }
-
-        d->Update();
-    }
-};
-
-MainPage mainPage;
 
 ////////////////////////////////////////////////////////////////////////////////
 // UI & Menu Structure
@@ -315,9 +147,7 @@ void ResetState()
 ////////////////////////////////////////////////////////////////////////////////
 // Converts our current BPM to a clock frequency based on pulses per quarter note.
 inline float BPMToClockFreq(int bpm)
-{
-    return ((float)bpm * PPQN) / 60.0f;
-}
+{ return ((float)bpm * PPQN) / 60.0f; }
 
 ////////////////////////////////////////////////////////////////////////////////
 void SetBPM(int bpm)

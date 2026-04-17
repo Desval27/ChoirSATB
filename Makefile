@@ -19,12 +19,15 @@ MONKEY_SRCS = \
 CPP_SOURCES = \
 	Main.cpp \
 	App.cpp \
-	Voices/Voice.cpp \
+	Voice.cpp \
+	Pages/MainPage.cpp \
+	Pages/MixerPage.cpp \
+	Pages/VoicePage.cpp \
 	$(MONKEY_SRCS)
 	
 C_DEFS += -DUSE_DEBUG=$(USE_DEBUG) -DDAISY_PLATFORM=$(DAISY_PLATFORM) -Wno-unused-variable
 OPT = -Os
-C_INCLUDES += -I$(MONKEY_DIR)
+C_INCLUDES += -I./ -I$(MONKEY_DIR)
 
 
 # Core location, and generic Makefile.

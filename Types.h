@@ -2,6 +2,9 @@
 
 #include <daisy_seed.h>
 #include <daisysp.h>
+#include <dev/oled_ssd130x.h>
+
+using MyDisplay = daisy::OledDisplay<daisy::SSD130xI2c128x64Driver>;
 
 enum ButtonIds
 {

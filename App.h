@@ -7,13 +7,11 @@
 #include <Music/Music.h>
 #include <Music/Gnome.h>
 
-#include "Types.h"
-#include "Bass.h"
-#include "Tenor.h"
-#include "Alto.h"
-#include "Soprano.h"
-
-using MyDisplay = OledDisplay<SSD130xI2c128x64Driver>;
+#include <Types.h>
+#include <Bass.h>
+#include <Tenor.h>
+#include <Alto.h>
+#include <Soprano.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
