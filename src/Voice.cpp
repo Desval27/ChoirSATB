@@ -109,7 +109,7 @@ void TheVoice::Update()
     else
     {
         char noteName[6];
-        _t->GetIntervalLabel(events[_currentNoteIndex].note, noteName, sizeof(noteName));
+        _t->GetNoteLabel(events[_currentNoteIndex].note, noteName, sizeof(noteName));
         snprintf(_noteBuf,
                  sizeof(_noteBuf),
                  "%s-%d",

@@ -42,26 +42,24 @@ class TheSoprano : public TheVoice
     {
         // First start with our "hit" pattern
         PatternEventSet<>      pattern;
-        const float            density = randomRange(0.4f, 0.8f); //0.50f;
-        const Music::NoteValue g       = Music::NoteValue::Eighth;
-        size_t maxSize = min(pattern.Count(), events.Capacity());
+        const Music::NoteValue g = Music::NoteValue::Eighth;
 
-        GeneratePattern(ts, bars, density, g, pattern);
+        GeneratePattern(ts, bars, randomRange(0.4f, 0.8f),  g, pattern);
+
 
         events.Clear();
-        for(size_t i = 0; i < maxSize; i++)
+        for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
         {
-            const float r            = randomRange(0.0f, 0.999999f);
-            int         periodOffset = 0;
-
             if(pattern[i]) // Hit
             {
-                events.Emplace(
-                    GetWeightedNote(r, periodOffset), periodOffset, g);
+                int               periodOffset = 0;
+                const Music::Note n            = GetWeightedNote(
+                    randomRange(0.0f, 0.999999f), periodOffset);
+                events.Emplace(n, periodOffset, g);
             }
             else
             {
-                events.Emplace(REST, periodOffset, g);
+                events.Emplace(REST, 0, g);
             }
         }
         return events.Count();

@@ -127,7 +127,8 @@ class TheVoice
                               int                         bars,
                               Music::ChordEventSet<> &chords)
     {
-        return chords.Count();
+        events.Clear();
+        return events.Count();
     }
 
   protected:

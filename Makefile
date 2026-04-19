@@ -12,22 +12,23 @@ DAISYSP_DIR ?= ../../DaisySP
 MONKEY_DIR = ../../../Monkey
 MONKEY_SRC = $(MONKEY_DIR)/src
 MONKEY_INC = $(MONKEY_DIR)/include
-MONKEY_CPP_SOURCES = $(wildcard $(MONKEY_SRC)/*.cpp)
+MONKEY_CPP_SOURCES = $(wildcard $(MONKEY_SRC)/*.cpp) 
+
+APP_SRC = src
+APP_INC = include
+APP_CPP_SOURCES = $(wildcard $(APP_SRC)/*.cpp) $(wildcard $(APP_SRC)/Pages/*.cpp)
 
 # Sources
 CPP_SOURCES = \
-	Main.cpp \
-	App.cpp \
-	Voice.cpp \
-	Pages/MainPage.cpp \
-	Pages/MixerPage.cpp \
-	Pages/VoicePage.cpp \
+	$(APP_CPP_SOURCES) \
 	$(MONKEY_CPP_SOURCES)
 	
 C_DEFS += -DDAISY_PLATFORM=$(DAISY_PLATFORM) -Wno-unused-variable
 #OPT = -Og 
 OPT = -Os
-C_INCLUDES += -I. -I$(MONKEY_INC)
+C_INCLUDES += -I$(APP_INC) -I$(MONKEY_INC)
+
+.PHONY: garp
 
 
 # Core location, and generic Makefile.
@@ -38,3 +39,6 @@ show_size: # $(BUILD_DIR)/$(TARGET).elf
 	@echo "Size of $(TARGET).elf:"
 	@arm-none-eabi-nm --print-size --size-sort --reverse-sort $(BUILD_DIR)/$(TARGET).elf
 	
+garp:
+	@echo $(CPP_SOURCES)
+

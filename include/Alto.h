@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: CC0-1.0 */
 /**
- * @file Tenor.h
- * @brief Tenor Voice.
+ * @file Alto.h
+ * @brief Alto Voice.
  * @author pfburdette <paul.f.burdette@gmail.com>
  *
  * @copyright This work is dedicated to the public domain under CC0 1.0.
@@ -21,23 +21,21 @@
 
 #include "Voice.h"
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief
-class TheTenor : public TheVoice
+class TheAlto : public TheVoice
 {
   public:
-    TheTenor(const Music::TimeSignature&   ts,
-             const Music::TuningReference& tr,
-             const Music::Temperament&     t,
-             const Music::ScaleMap&        s)
-    // -2 Relative to C4 = C2
-    : TheVoice(ts, tr, t, s, -2, 0.2, 0.2, 0.4, 0.2)
+    TheAlto(const Music::TimeSignature&   ts,
+            const Music::TuningReference& tr,
+            const Music::Temperament&     t,
+            const Music::ScaleMap&        s)
+    // -1 Relative to C4 = C3
+    : TheVoice(ts, tr, t, s, -1, 0.1, 0.2, 0.4, 0.1)
     {
         SetWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY,
                    ArrayLen(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY));
     }
 
-    virtual const char* GetName() const override { return s_TENOR; }
+    virtual const char* GetName() const override { return s_ALTO; }
 
     virtual size_t MakeEvents(const Music::TimeSignature& ts,
                               int                         bars,
@@ -45,25 +43,23 @@ class TheTenor : public TheVoice
     {
         // First start with our "hit" pattern
         PatternEventSet<> pattern;
-        float             density = randomRange(0.6, 0.9);
-        Music::NoteValue  g       = Music::NoteValue::Quarter;
-        size_t maxSize = min(pattern.Count(), events.Capacity());
+        Music::NoteValue  g = Music::NoteValue::Quarter;
 
-        GeneratePattern(ts, bars, density, g, pattern);
+        GeneratePattern(ts, bars, randomRange(0.3, 0.5), g, pattern);
 
         events.Clear();
-        for(size_t i = 0; i < maxSize; i++)
+        for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
         {
-            const float r            = randomRange(0.0f, 0.999999f);
-            int         periodOffset = 0;
-
             if(pattern[i]) // Hit
             {
-                events.Emplace(GetWeightedNote(r, periodOffset), periodOffset, g);
+                int         periodOffset = 0;
+                Music::Note n = GetWeightedNote(randomRange(0.0f, 0.999999f),
+                                                periodOffset);
+                events.Emplace(n, periodOffset, g);
             }
             else
             {
-                events.Emplace(REST, periodOffset, g);
+                events.Emplace(REST, 0, g);
             }
         }
         return events.Count();

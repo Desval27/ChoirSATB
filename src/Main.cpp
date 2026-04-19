@@ -17,7 +17,7 @@ using namespace daisy;
 // Hardware Configuration
 ////////////////////////////////////////////////////////////////////////////////
 constexpr uint32_t DISPLAY_REFRESH_MS = 1000 / 10; // ~30 FPS
-constexpr uint32_t VOICE_REFRESH_MS   = 1000 / 5;  // ~5 FPS
+constexpr uint32_t VOICE_REFRESH_MS   = 1000 / 10;  // ~5 FPS
 constexpr uint32_t BEAT_FLASH_MS      = 1000 / 20;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -273,7 +273,7 @@ void InitUI()
     UiCanvasDescriptor oled_canvas;
     oled_canvas.id_                = 0;
     oled_canvas.handle_            = &display;
-    oled_canvas.updateRateMs_      = 10; // ~30 FPS
+    oled_canvas.updateRateMs_      = 30; // ~30 FPS
     oled_canvas.screenSaverTimeOut = 5000;
     oled_canvas.clearFunction_     = ClearCanvas;
     oled_canvas.flushFunction_     = FlushCanvas;
