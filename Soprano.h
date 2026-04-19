@@ -32,44 +32,38 @@ class TheSoprano : public TheVoice
                const Music::ScaleMap&        s)
     // 0 Relative to C4 = C4
     : TheVoice(ts, tr, t, s, 0, 0.1, 0.3, 0.6, 0.3)
-    {
-        SetWeights(SCALE_WEIGHTS_7_UNIFORM, ArrayLen(SCALE_WEIGHTS_7_UNIFORM));
-    }
+    { SetWeights(SCALE_WEIGHTS_7_UNIFORM, ArrayLen(SCALE_WEIGHTS_7_UNIFORM)); }
 
     virtual const char* GetName() const override { return s_SOPRANO; }
 
     virtual size_t MakeEvents(const Music::TimeSignature& ts,
                               int                         bars,
-                              Music::ChordEvent*          chordEvents,
-                              size_t chordEventsLen) override
+                              Music::ChordEventSet<>&     chords) override
     {
         // First start with our "hit" pattern
-        bool                   pattern[128];
+        PatternEventSet<>      pattern;
         const float            density = randomRange(0.4f, 0.8f); //0.50f;
         const Music::NoteValue g       = Music::NoteValue::Eighth;
-        size_t                 patternLen
-            = GeneratePattern(ts, bars, density, g, pattern, ArrayLen(pattern));
+        size_t maxSize = min(pattern.Count(), events.Capacity());
 
-        eventsLen = 0;
-        for(size_t i = 0; i < patternLen && eventsLen < ArrayLen(events); i++)
+        GeneratePattern(ts, bars, density, g, pattern);
+
+        events.Clear();
+        for(size_t i = 0; i < maxSize; i++)
         {
             const float r            = randomRange(0.0f, 0.999999f);
             int         periodOffset = 0;
 
             if(pattern[i]) // Hit
             {
-                events[eventsLen].note   = GetWeightedNote(r, periodOffset);
-                events[eventsLen].period = periodOffset;
-                events[eventsLen].value  = g;
+                events.Emplace(
+                    GetWeightedNote(r, periodOffset), periodOffset, g);
             }
             else
             {
-                events[eventsLen].note   = REST;
-                events[eventsLen].period = periodOffset;
-                events[eventsLen].value  = g;
+                events.Emplace(REST, periodOffset, g);
             }
-            eventsLen++;
         }
-        return eventsLen;
+        return events.Count();
     }
 };

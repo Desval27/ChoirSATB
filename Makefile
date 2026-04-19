@@ -9,11 +9,10 @@ DAISY_PLATFORM = DAISY_SEED
 LIBDAISY_DIR ?= ../../libDaisy
 DAISYSP_DIR ?= ../../DaisySP
 
-MONKEY_DIR ?= ../../../Monkey
-MONKEY_SRCS = \
-	$(MONKEY_DIR)/Monkey.cpp \
-	$(MONKEY_DIR)/Music.cpp \
-	$(MONKEY_DIR)/Euclid.cpp
+MONKEY_DIR = ../../../Monkey
+MONKEY_SRC = $(MONKEY_DIR)/src
+MONKEY_INC = $(MONKEY_DIR)/include
+MONKEY_CPP_SOURCES = $(wildcard $(MONKEY_SRC)/*.cpp)
 
 # Sources
 CPP_SOURCES = \
@@ -23,12 +22,12 @@ CPP_SOURCES = \
 	Pages/MainPage.cpp \
 	Pages/MixerPage.cpp \
 	Pages/VoicePage.cpp \
-	$(MONKEY_SRCS)
+	$(MONKEY_CPP_SOURCES)
 	
-C_DEFS += -DUSE_DEBUG=$(USE_DEBUG) -DDAISY_PLATFORM=$(DAISY_PLATFORM) -Wno-unused-variable
+C_DEFS += -DDAISY_PLATFORM=$(DAISY_PLATFORM) -Wno-unused-variable
 #OPT = -Og 
 OPT = -Os
-C_INCLUDES += -I. -I$(MONKEY_DIR)
+C_INCLUDES += -I. -I$(MONKEY_INC)
 
 
 # Core location, and generic Makefile.

@@ -34,7 +34,7 @@ class TheApp
 
     void Init(float sample_rate);
 
-    size_t MakeChordEvents(ChordEvent *eventsOut, size_t eventsOutLen);
+    size_t MakeChordEvents(ChordEventSet<> &chords);
     void   MakeEvents();
 
     int  DoPulse();

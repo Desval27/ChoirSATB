@@ -41,37 +41,31 @@ class TheTenor : public TheVoice
 
     virtual size_t MakeEvents(const Music::TimeSignature& ts,
                               int                         bars,
-                              Music::ChordEvent*          chordEvents,
-                              size_t chordEventsLen) override
+                              Music::ChordEventSet<>&     chords)
     {
         // First start with our "hit" pattern
-        bool             pattern[128];
-        float            density = randomRange(0.6, 0.9);
-        Music::NoteValue g       = Music::NoteValue::Quarter;
-        size_t           patternLen
-            = GeneratePattern(ts, bars, density, g, pattern, ArrayLen(pattern));
+        PatternEventSet<> pattern;
+        float             density = randomRange(0.6, 0.9);
+        Music::NoteValue  g       = Music::NoteValue::Quarter;
+        size_t maxSize = min(pattern.Count(), events.Capacity());
 
-        eventsLen = 0;
-        for(size_t i = 0; i < patternLen && eventsLen < ArrayLen(events); i++)
+        GeneratePattern(ts, bars, density, g, pattern);
+
+        events.Clear();
+        for(size_t i = 0; i < maxSize; i++)
         {
             const float r            = randomRange(0.0f, 0.999999f);
             int         periodOffset = 0;
 
             if(pattern[i]) // Hit
             {
-                events[eventsLen].note   = GetWeightedNote(r, periodOffset);
-                events[eventsLen].period = periodOffset;
-                events[eventsLen].value  = g;
+                events.Emplace(GetWeightedNote(r, periodOffset), periodOffset, g);
             }
             else
             {
-                events[eventsLen].note   = REST;
-                events[eventsLen].period = periodOffset;
-                events[eventsLen].value  = g;
+                events.Emplace(REST, periodOffset, g);
             }
-            eventsLen++;
         }
-        // debugNoteEvents(ts, events, eventsLen);
-        return eventsLen;
+        return events.Count();
     }
 };

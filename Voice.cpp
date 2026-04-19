@@ -22,15 +22,17 @@ TheVoice::TheVoice(const Music::TimeSignature&   ts,
          decay,
          sustain,
          release),
-  eventsLen(0),
   _ts(&ts),
   _tr(&tr),
   _t(&t),
   _s(&s),
   _weights(nullptr),
   _weightCount(0),
-  _gate(false)
+  _gate(false),
+  _currentNoteIndex(-1)
 {
+    events.Clear();
+
     const float rootC4Hz
         = _t->FrequencyFromReference(Music::TemperedPitch(0, 0), *_tr);
     const float voiceRootHz
@@ -69,8 +71,8 @@ float TheVoice::Process()
 /// @param pulse
 void TheVoice::DoPulse(int pulse)
 {
-    _currentNote = GetEventForPulse(pulse);
-    if(_currentNote.note != Music::REST && IsEventRisingEdge(pulse))
+    _currentNoteIndex = events.GetEventIndexForPulse(pulse);
+    if(events[_currentNoteIndex].note != Music::REST && IsEventRisingEdge(pulse))
         _gate = true;
     if(IsEventFallingEdge(pulse))
         _gate = false;
@@ -80,9 +82,9 @@ void TheVoice::DoPulse(int pulse)
     ampEnv.SetSustainLevel(config.ampAdsr.sustain);
     ampEnv.SetReleaseTime(config.ampAdsr.release);
 
-    if(_currentNote.note != Music::REST)
+    if(events[_currentNoteIndex].note != Music::REST)
     {
-        HandleNoteEvent(pulse, _currentNote);
+        HandleNoteEvent(pulse, events[_currentNoteIndex]);
     }
 }
 
@@ -100,19 +102,19 @@ void TheVoice::HandleNoteEvent(int pulse, Music::NoteEvent ne)
 void TheVoice::Update()
 {
     // Update our text here outside of the main audio event handler
-    if(_currentNote.note == Music::REST)
+    if(events[_currentNoteIndex].note == Music::REST)
     {
         _noteBuf[0] = '\0';
     }
     else
     {
         char noteName[6];
-        _t->GetIntervalLabel(_currentNote.note, noteName, sizeof(noteName));
+        _t->GetIntervalLabel(events[_currentNoteIndex].note, noteName, sizeof(noteName));
         snprintf(_noteBuf,
                  sizeof(_noteBuf),
                  "%s-%d",
                  noteName,
-                 4 + config.periodOffset + _currentNote.period);
+                 4 + config.periodOffset + events[_currentNoteIndex].period);
     }
 }
 
@@ -147,17 +149,6 @@ Music::Note TheVoice::GetWeightedNote(float unitRandom, int& outPeriodOffset)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
-/// @return
-int TheVoice::GetTotalEventPulses() const
-{
-    int totalPulses = 0;
-    for(size_t i = 0; i < eventsLen; i++)
-        totalPulses += static_cast<int>(events[i].value);
-    return totalPulses;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/// @brief
 /// @param root
 /// @param index
 /// @param outPeriodOffset
@@ -174,33 +165,24 @@ Music::Degree TheVoice::GetMappedDegreeFromRoot(Music::Degree root,
 /// @brief
 /// @param pulse
 /// @return
-int TheVoice::GetEventIndexForPulse(int pulse) const
-{
-    return FindAssociatedEventIndex(pulse);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/// @brief
-/// @param pulse
-/// @return
 bool TheVoice::IsEventRisingEdge(int pulse) const
 {
-    if(eventsLen == 0 || pulse < 0)
+    if(events.Count() == 0 || pulse < 0)
         return false;
 
-    const int currentEventIdx = GetEventIndexForPulse(pulse);
+    const int currentEventIdx = events.GetEventIndexForPulse(pulse);
     if(currentEventIdx < 0)
         return false;
 
     int previousPulse = pulse - 1;
     if(pulse == 0)
     {
-        const int totalPulses = GetTotalEventPulses();
+        const int totalPulses = events.GetTotalEventPulses();
         if(totalPulses > 0)
             previousPulse = totalPulses - 1;
     }
 
-    const int previousEventIdx = GetEventIndexForPulse(previousPulse);
+    const int previousEventIdx = events.GetEventIndexForPulse(previousPulse);
     return currentEventIdx != previousEventIdx;
 }
 
@@ -212,10 +194,10 @@ bool TheVoice::IsEventRisingEdge(int pulse) const
 bool TheVoice::IsEventFallingEdge(int                 pulse,
                                   Music::Articulation articulation) const
 {
-    if(eventsLen == 0 || pulse < 0)
+    if(events.Count() == 0 || pulse < 0)
         return false;
 
-    const int totalPulses = GetTotalEventPulses();
+    const int totalPulses = events.GetTotalEventPulses();
     if(totalPulses <= 0)
         return false;
 
@@ -226,8 +208,8 @@ bool TheVoice::IsEventFallingEdge(int                 pulse,
             previousPulse = totalPulses - 1;
     }
 
-    const Music::NoteEvent& currentEvent  = GetEventForPulse(pulse);
-    const Music::NoteEvent& previousEvent = GetEventForPulse(previousPulse);
+    const Music::NoteEvent& currentEvent  = events.GetEventForPulse(pulse);
+    const Music::NoteEvent& previousEvent = events.GetEventForPulse(previousPulse);
 
     // Always release when the sequence transitions from note to rest.
     if(previousEvent.note != Music::REST && currentEvent.note == Music::REST)
@@ -238,12 +220,12 @@ bool TheVoice::IsEventFallingEdge(int                 pulse,
        || currentEvent.note == Music::REST)
         return false;
 
-    const int eventIdx = GetEventIndexForPulse(pulse);
-    if(eventIdx < 0 || eventIdx >= static_cast<int>(eventsLen))
+    const int eventIdx = events.GetEventIndexForPulse(pulse);
+    if(eventIdx < 0 || eventIdx >= static_cast<int>(events.Count()))
         return false;
 
     const int eventStartPulse
-        = GetEventStartPulse(static_cast<size_t>(eventIdx));
+        = events.GetEventStartPulse(static_cast<size_t>(eventIdx));
     const int eventPulseOffset
         = ((pulse % totalPulses) - eventStartPulse + totalPulses) % totalPulses;
     const int span = static_cast<int>(events[eventIdx].value);
@@ -263,55 +245,3 @@ bool TheVoice::IsEventFallingEdge(int                 pulse,
     return eventPulseOffset == releasePulseOffset;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief
-/// @param pulse
-/// @return
-const Music::NoteEvent& TheVoice::GetEventForPulse(int pulse) const
-{
-    int eventIdx = FindAssociatedEventIndex(pulse);
-    if(eventIdx >= 0 && eventIdx < static_cast<int>(eventsLen))
-        return events[eventIdx];
-    return emptyNote;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/// @brief
-/// @param eventIndex
-/// @return
-int TheVoice::GetEventStartPulse(size_t eventIndex) const
-{
-    int pulseCursor = 0;
-    for(size_t i = 0; i < eventIndex && i < eventsLen; i++)
-        pulseCursor += static_cast<int>(events[i].value);
-    return pulseCursor;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/// @brief
-/// @param pulse
-/// @return
-int TheVoice::FindAssociatedEventIndex(int pulse) const
-{
-    if(eventsLen == 0 || pulse < 0)
-        return -1;
-
-    int totalPulses = GetTotalEventPulses();
-
-    if(totalPulses <= 0)
-        return -1;
-
-    const int normalizedPulse = pulse % totalPulses;
-
-    int pulseCursor = 0;
-    for(size_t i = 0; i < eventsLen; i++)
-    {
-        const int span = static_cast<int>(events[i].value);
-        if(normalizedPulse < (pulseCursor + span))
-            return static_cast<int>(i);
-
-        pulseCursor += span;
-    }
-
-    return static_cast<int>(eventsLen - 1);
-}

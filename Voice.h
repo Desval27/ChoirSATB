@@ -125,17 +125,17 @@ class TheVoice
 
     virtual size_t MakeEvents(const Music::TimeSignature& ts,
                               int                         bars,
-                              Music::ChordEvent*          chordEvents,
-                              size_t                      chordEventsLen)
+                              Music::ChordEventSet<> &chords)
     {
-        return eventsLen = 0;
+        return chords.Count();
     }
 
   protected:
     VoiceConfig         config;
     Music::NoteEvent    emptyNote;
-    Music::NoteEvent    events[128];
-    size_t              eventsLen;
+    Music::NoteEventSet<> events;
+    // Music::NoteEvent    events[128];
+    // size_t              eventsLen;
 
     daisysp::Oscillator osc;
     daisysp::MoogLadder flt;
@@ -144,20 +144,16 @@ class TheVoice
     virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne);
 
     Music::Note GetWeightedNote(float unitRandom, int& outPeriodOffset);
-    int         GetTotalEventPulses() const;
     float GetFreqForNote(Music::Note n, Music::Period p, float fc = 0.0f) const;
 
     Music::Degree GetMappedDegreeFromRoot(Music::Degree root,
                                           int           index,
                                           int&          outPeriodOffset) const;
 
-    int  GetEventIndexForPulse(int pulse) const;
     bool IsEventRisingEdge(int pulse) const;
     bool IsEventFallingEdge(int                 pulse,
                             Music::Articulation articulation
                             = Music::Articulation::Normal) const;
-
-    const Music::NoteEvent& GetEventForPulse(int pulse) const;
 
   private:
     const Music::TimeSignature*   _ts;
@@ -168,9 +164,6 @@ class TheVoice
     size_t                        _weightCount;
     Music::PitchEngine            _pe;
     bool                          _gate;
-    Music::NoteEvent              _currentNote;
+    int                           _currentNoteIndex;
     char                          _noteBuf[16];
-
-    int GetEventStartPulse(size_t eventIndex) const;
-    int FindAssociatedEventIndex(int pulse) const;
 };

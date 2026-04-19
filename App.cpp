@@ -2,10 +2,10 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief 
-/// @param hw 
-/// @param bars 
-/// @return 
+/// @brief
+/// @param hw
+/// @param bars
+/// @return
 TheApp &TheApp::instance(int bars)
 {
     static TheApp inst(bars);
@@ -57,16 +57,13 @@ void TheApp::Init(float sample_rate)
 /// @brief
 /// @param delta
 void TheApp::AdjustBPM(int delta)
-{
-    _config.bpm.Step(delta, false);
-}
+{ _config.bpm.Step(delta, false); }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
-/// @param eventsOut
-/// @param eventsOutLen
+/// @param chords
 /// @return
-size_t TheApp::MakeChordEvents(ChordEvent *eventsOut, size_t eventsOutLen)
+size_t TheApp::MakeChordEvents(ChordEventSet<> &chords)
 {
     return GenerateStandardChordEvents(
         _ts,
@@ -74,8 +71,7 @@ size_t TheApp::MakeChordEvents(ChordEvent *eventsOut, size_t eventsOutLen)
         _bars,
         SCALE_TABLES[GetScaleIndex()].harmonicMode,
         NoteValue::Whole,
-        eventsOut,
-        eventsOutLen);
+        chords);
     // First start with our "hit" pattern
     // bool   pattern[MAX_EVENTS];
     // size_t patternLen = Music::GeneratePattern(
@@ -91,15 +87,14 @@ size_t TheApp::MakeChordEvents(ChordEvent *eventsOut, size_t eventsOutLen)
 /// @brief
 void TheApp::MakeEvents()
 {
-    ChordEvent chordEvents[MAX_EVENTS];
-    size_t     chordEventsLen = 0;
+    ChordEventSet<> chords;
 
     // First establish our harmonic rhythm
-    chordEventsLen = MakeChordEvents(chordEvents, ArrayLen(chordEvents));
+    MakeChordEvents(chords);
 
     // Pass that onto our voices
     for(int i = 0; i < NUM_VOICES; i++)
-        _voices[i]->MakeEvents(_ts, _bars, chordEvents, chordEventsLen);
+        _voices[i]->MakeEvents(_ts, _bars, chords);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

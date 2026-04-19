@@ -43,18 +43,19 @@ class TheBass : public TheVoice
 
     virtual const char* GetName() const override { return s_BASS; }
 
-    virtual size_t MakeEvents(const TimeSignature& ts,
-                              int                  bars,
-                              ChordEvent*          chordEvents,
-                              size_t               chordEventsLen) override
+    virtual size_t MakeEvents(const TimeSignature&    ts,
+                              int                     bars,
+                              Music::ChordEventSet<>& chords) override
     {
         // A direct rhythmic copy test for now.
-        eventsLen = 0;
+        size_t    maxSize = min(chords.Count(), events.Capacity());
         NoteValue len1;
         NoteValue len2;
+        Note      n;
         int       periodOffset;
-        // Right now there is no bounds checking for max event length.  Will fix later.
-        for(size_t i = 0; i < chordEventsLen && i < ArrayLen(events); i++)
+
+        events.Clear();
+        for(size_t i = 0; i < maxSize; i++)
         {
             // Each chord event will generate a constrained set events randomly
             switch(random() % 6)
@@ -62,100 +63,81 @@ class TheBass : public TheVoice
                 default:
                 case 0:
                 case 1:
-                    events[eventsLen].note   = chordEvents[i].root;
-                    events[eventsLen].period = 0;
-                    events[eventsLen].value  = chordEvents[i].value;
-                    eventsLen++;
+                    n    = chords[i].root;
+                    len1 = chords[i].value;
+                    events.Emplace(n, 0, len1);
                     break;
 
 
                 // Split into two equal events
                 case 2:
-                    len1                     = chordEvents[i].value / 2;
-                    events[eventsLen].note   = chordEvents[i].root;
-                    events[eventsLen].period = 0;
-                    events[eventsLen].value  = len1;
-                    eventsLen++;
+                    n    = chords[i].root;
+                    len1 = chords[i].value / 2;
+                    events.Emplace(n, 0, len1);
 
                     // Randomly choose between the 4th and 5th for the second note.
                     if(random() % 2 == 0)
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 3, periodOffset);
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 3, periodOffset);
                     else
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 4, periodOffset);
-                    events[eventsLen].period = periodOffset;
-                    events[eventsLen].value  = len1;
-                    eventsLen++;
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 4, periodOffset);
+                    events.Emplace(n, periodOffset, len1);
                     break;
 
                 // Split into four equal events.
                 case 3:
                 case 4:
-                    len1 = chordEvents[i].value / 4;
+                    n    = chords[i].root;
+                    len1 = chords[i].value / 4;
 
-                    events[eventsLen].note   = chordEvents[i].root;
-                    events[eventsLen].period = 0;
-                    events[eventsLen].value  = len1;
-                    eventsLen++;
+                    events.Emplace(n, periodOffset, len1);
 
                     // Randomly choose between the 4th and 5th for the second note.
                     if(random() % 2 == 0)
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 3, periodOffset);
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 3, periodOffset);
                     else
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 4, periodOffset);
-                    events[eventsLen].period = periodOffset;
-                    events[eventsLen].value  = len1;
-                    eventsLen++;
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 4, periodOffset);
+                    events.Emplace(n, periodOffset, len1);
 
                     if(random() % 2 == 0)
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 2, periodOffset);
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 2, periodOffset);
                     else
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 4, periodOffset);
-                    events[eventsLen].period = periodOffset;
-                    events[eventsLen].value  = len1;
-                    eventsLen++;
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 4, periodOffset);
+                    events.Emplace(n, periodOffset, len1);
 
                     if(random() % 2 == 0)
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 3, periodOffset);
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 3, periodOffset);
                     else
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 4, periodOffset);
-                    events[eventsLen].period = periodOffset;
-                    events[eventsLen].value  = len1;
-                    eventsLen++;
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 4, periodOffset);
+                    events.Emplace(n, periodOffset, len1);
                     break;
 
                 // Split into two events.  In 4/4 this will result in a dotted half note followed by a quarter.
                 case 5:
-                    len2 = min(ts.beatValue, chordEvents[i].value);
-                    len1 = max(
-                        ts.beatValue,
-                        static_cast<NoteValue>(chordEvents[i].value - len2));
-                    events[eventsLen].note   = chordEvents[i].root;
-                    events[eventsLen].period = 0;
-                    events[eventsLen].value  = len1;
-                    eventsLen++;
+                    n    = chords[i].root;
+                    len2 = min(ts.beatValue, chords[i].value);
+                    len1 = max(ts.beatValue,
+                               static_cast<NoteValue>(chords[i].value - len2));
+                    events.Emplace(n, periodOffset, len1);
 
                     // Randomly choose between the 4th and 5th for the second note.
                     if(random() % 2 == 0)
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 3, periodOffset);
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 3, periodOffset);
                     else
-                        events[eventsLen].note = GetMappedDegreeFromRoot(
-                            chordEvents[i].root, 4, periodOffset);
-                    events[eventsLen].period = periodOffset;
-                    events[eventsLen].value  = len2;
-                    eventsLen++;
+                        n = GetMappedDegreeFromRoot(
+                            chords[i].root, 4, periodOffset);
+                    events.Emplace(n, periodOffset, len2);
                     break;
             }
         }
-        return eventsLen;
+        return events.Count();
     }
-
 };
