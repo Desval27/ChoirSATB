@@ -135,26 +135,23 @@ class TheVoice
     VoiceConfig         config;
     Music::NoteEvent    emptyNote;
     Music::NoteEventSet<> events;
-    // Music::NoteEvent    events[128];
-    // size_t              eventsLen;
 
     daisysp::Oscillator osc;
     daisysp::MoogLadder flt;
     daisysp::Adsr       ampEnv;
 
     virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne);
-
     Music::Note GetWeightedNote(float unitRandom, int& outPeriodOffset);
     float GetFreqForNote(Music::Note n, Music::Period p, float fc = 0.0f) const;
-
     Music::Degree GetMappedDegreeFromRoot(Music::Degree root,
                                           int           index,
                                           int&          outPeriodOffset) const;
-
     bool IsEventRisingEdge(int pulse) const;
     bool IsEventFallingEdge(int                 pulse,
                             Music::Articulation articulation
                             = Music::Articulation::Normal) const;
+    int GetEventPulseOffset(int pulse) const;
+    const Music::ScaleMap& GetScaleMap() const { return *_s; }
 
   private:
     const Music::TimeSignature*   _ts;

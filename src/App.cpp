@@ -55,6 +55,16 @@ void TheApp::Init(float sample_rate)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
+void TheApp::Update()
+{
+    for(int i = 0; i < NUM_VOICES; i++)
+    {
+        _voices[i]->Update();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief
 /// @param delta
 void TheApp::AdjustBPM(int delta)
 { _config.bpm.Step(delta, false); }
@@ -87,14 +97,12 @@ size_t TheApp::MakeChordEvents(ChordEventSet<> &chords)
 /// @brief
 void TheApp::MakeEvents()
 {
-    ChordEventSet<> chords;
-
     // First establish our harmonic rhythm
-    MakeChordEvents(chords);
+    MakeChordEvents(_chords);
 
     // Pass that onto our voices
     for(int i = 0; i < NUM_VOICES; i++)
-        _voices[i]->MakeEvents(_ts, _bars, chords);
+        _voices[i]->MakeEvents(_ts, _bars, _chords);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -118,6 +126,15 @@ int TheApp::DoPulse()
     for(int i = 0; i < NUM_VOICES; i++)
     {
         _voices[i]->DoPulse(pulse);
+    }
+    
+    // This won't always work and needs to be improved.
+    if (_gnome.RisingBeatEdge())
+    {
+        ChordEvent chord = _chords.GetEventForPulse(pulse);
+        // Later we need to let the chord produce the text to account for tones
+        _t.GetNoteLabel(chord.root, _chordText, sizeof(_chordText));
+
     }
     return pulse;
 }

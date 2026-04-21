@@ -52,7 +52,7 @@ class TheBass : public TheVoice
         NoteValue len1;
         NoteValue len2;
         Note      n;
-        int       periodOffset;
+        int       periodOffset = 0;
 
         events.Clear();
         for(size_t i = 0; i < maxSize; i++)
@@ -91,7 +91,7 @@ class TheBass : public TheVoice
                     n    = chords[i].root;
                     len1 = chords[i].value / 4;
 
-                    events.Emplace(n, periodOffset, len1);
+                    events.Emplace(n, 0, len1);
 
                     // Randomly choose between the 4th and 5th for the second note.
                     if(random() % 2 == 0)
@@ -125,7 +125,7 @@ class TheBass : public TheVoice
                     len2 = min(ts.beatValue, chords[i].value);
                     len1 = max(ts.beatValue,
                                static_cast<NoteValue>(chords[i].value - len2));
-                    events.Emplace(n, periodOffset, len1);
+                    events.Emplace(n, 0, len1);
 
                     // Randomly choose between the 4th and 5th for the second note.
                     if(random() % 2 == 0)

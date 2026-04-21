@@ -17,7 +17,7 @@ using namespace daisy;
 // Hardware Configuration
 ////////////////////////////////////////////////////////////////////////////////
 constexpr uint32_t DISPLAY_REFRESH_MS = 1000 / 10; // ~30 FPS
-constexpr uint32_t VOICE_REFRESH_MS   = 1000 / 10;  // ~5 FPS
+constexpr uint32_t APP_REFRESH_MS   = 1000 / 10;  // ~5 FPS
 constexpr uint32_t BEAT_FLASH_MS      = 1000 / 20;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +48,7 @@ MyDisplay    display;
 UiEventQueue eventQueue;
 Metro        clock;
 // dsy_gpio           gate_output;
-//ReverbSc verb;
+ReverbSc verb;
 
 struct PotBackend
 {
@@ -204,10 +204,11 @@ void AudioCallback(AudioHandle::InterleavingInputBuffer  in,
                        * equalMix;
             }
 
-            out[i]     = sig;
-            out[i + 1] = sig;
-
-            //verb.Process(sig, sig, &out[i], &out[i + 1]);
+            float wetL = 0.0f;
+            float wetR = 0.0f;
+            verb.Process(sig, sig, &wetL, &wetR);
+            out[i]     = (sig * 0.8f) + (wetL * 0.2f);
+            out[i + 1] = (sig * 0.8f) + (wetR * 0.2f);
         }
         else
         {
@@ -324,17 +325,13 @@ void ProcessControls(uint32_t nowMS)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void ProcessVoices(uint32_t nowMS)
-{
+void UpdateApp(uint32_t nowMS)
+{    
     static uint32_t lastUpdateMS = 0;
-    if(nowMS - lastUpdateMS > VOICE_REFRESH_MS)
+    if(nowMS - lastUpdateMS > APP_REFRESH_MS)
     {
         lastUpdateMS = nowMS;
-        for(int i = 0; i < theApp.NUM_VOICES; i++)
-        {
-            TheVoice* v = theApp.GetVoice(i);
-            v->Update();
-        }
+        theApp.Update();
     }
 }
 
@@ -356,9 +353,9 @@ int main(void)
     theApp.Init(sample_rate);
 
     //setup reverb
-    // verb.Init(sample_rate);
-    // verb.SetFeedback(0.6f);
-    // verb.SetLpFreq(18000.0f);
+    verb.Init(sample_rate);
+    verb.SetFeedback(0.6f);
+    verb.SetLpFreq(18000.0f);
 
     // Initialize our UI Components and Controls
     InitDisplay();
@@ -381,7 +378,8 @@ int main(void)
         }
 
         ProcessControls(nowMS);
-        ProcessVoices(nowMS);
+        UpdateApp(nowMS);
+        
 
         ui.Process();
     }

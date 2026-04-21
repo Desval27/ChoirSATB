@@ -43,25 +43,25 @@ class TheAlto : public TheVoice
     {
         // First start with our "hit" pattern
         PatternEventSet<> pattern;
-        Music::NoteValue  g = Music::NoteValue::Quarter;
-
-        GeneratePattern(ts, bars, randomRange(0.3, 0.5), g, pattern);
-
-        events.Clear();
-        for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
-        {
-            if(pattern[i]) // Hit
-            {
-                int         periodOffset = 0;
-                Music::Note n = GetWeightedNote(randomRange(0.0f, 0.999999f),
-                                                periodOffset);
-                events.Emplace(n, periodOffset, g);
-            }
-            else
-            {
-                events.Emplace(REST, 0, g);
-            }
-        }
-        return events.Count();
+        const Music::NoteValue  g = Music::NoteValue::Quarter;
+        const float density = randomRange(0.5, 0.8);
+        GeneratePattern(ts, bars, density, g, pattern);
+        return GenerateEventsFromPattern(pattern, chords, ts, GetScaleMap(), bars, g, events);
+        // events.Clear();
+        // for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
+        // {
+        //     if(pattern[i]) // Hit
+        //     {
+        //         int         periodOffset = 0;
+        //         Music::Note n = GetWeightedNote(randomRange(0.0f, 0.999999f),
+        //                                         periodOffset);
+        //         events.Emplace(n, periodOffset, g);
+        //     }
+        //     else
+        //     {
+        //         events.Emplace(REST, 0, g);
+        //     }
+        // }
+        // return events.Count();
     }
 };

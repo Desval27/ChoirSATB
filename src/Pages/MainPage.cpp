@@ -131,6 +131,8 @@ void MainPage::Draw(const daisy::UiCanvasDescriptor& canvas)
     d->WriteString(SCALE_TABLES[theApp.GetScaleIndex()].name, Font_7x10, true);
     d->SetCursor(line3X, line3Y);
     theApp.AppendVolumeToString(txt);
+    txt.Append(" ");
+    txt.Append(theApp.GetChordText());
     //theApp.snprintf(txtBuf, sizeof(txtBuf), "BPM: %3d", theApp.GetBPM());
     d->WriteString(txt.Cstr(), Font_7x10, true);
 

@@ -33,6 +33,7 @@ class TheApp
 
 
     void Init(float sample_rate);
+    void Update();
 
     size_t MakeChordEvents(ChordEventSet<> &chords);
     void   MakeEvents();
@@ -44,6 +45,7 @@ class TheApp
     void AdjustBPM(int delta);
     void AppendVolumeToString(daisy::FixedCapStrBase<char>& string) const { _config.bpm.AppentToString(string); }
 
+    const char* GetChordText() const { return _chordText; }
     bool GetRunning() const { return _running; }
     void SetRunning(bool value) { _running = value; }
     void ToggleRunning() { _running = !_running; }
@@ -60,6 +62,8 @@ class TheApp
     const TimeSignature   _ts;
     Temperament           _t;
     ScaleMap              _s;
+    ChordEventSet<>       _chords;
+    char                  _chordText[16];
 
     volatile bool _running;
     int           _scaleIndex;
