@@ -106,9 +106,20 @@ void TheVoice::DoPulse(int pulse)
 /// @param ne 
 void TheVoice::HandleNoteEvent(int pulse, Music::NoteEvent ne)
 {
-    const float freq = GetFreqForNote(ne.note, ne.period);
-    if(std::isfinite(freq) && freq > 0.0f)
-        osc.SetFreq(freq);
+    SetBaseFrequency(GetFreqForNote(ne.note, ne.period));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief 
+/// @param pulse 
+/// @param ne 
+void TheVoice::SetBaseFrequency(float value)
+{
+    if(std::isfinite(value) && value > 0.0f)
+    {
+        _baseFrequency = value;
+        osc.SetFreq(_baseFrequency);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

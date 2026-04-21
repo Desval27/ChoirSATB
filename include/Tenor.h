@@ -44,8 +44,8 @@ class TheTenor : public TheVoice
                               Music::ChordEventSet<>&     chords)
     {
         // First start with our "hit" pattern
-        PatternEventSet<> pattern;
-        const Music::NoteValue  g = Music::NoteValue::Quarter;
+        PatternEventSet<>      pattern;
+        const Music::NoteValue g = Music::NoteValue::Quarter;
         GeneratePattern(ts,
                         bars,
                         randomRange(0.6, 0.9), // density
@@ -53,7 +53,7 @@ class TheTenor : public TheVoice
                         pattern);
 
         events.Clear();
-        for(size_t i = 0; i < pattern.Count() && !events.AtCapacity() ; i++)
+        for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
         {
             if(pattern[i]) // Hit
             {

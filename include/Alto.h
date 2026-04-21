@@ -37,6 +37,27 @@ class TheAlto : public TheVoice
 
     virtual const char* GetName() const override { return s_ALTO; }
 
+    virtual void Init(float sample_rate) override 
+    {
+        TheVoice::Init(sample_rate);
+        vib.Init(sample_rate);
+        vib.SetWaveform(Oscillator::WAVE_SIN);
+        vib.SetFreq(5.5f);   // Typical?
+    }
+
+    virtual float Process() 
+    {
+        const float vib_depth = 0.0293f;  // ~50 cents pitch multipler
+
+        float vib_val = vib.Process();
+
+        // Multipilcation scales the frequency exponentially (musically)
+        float freq = GetBaseFrequency() * (1.0f + (vib_val * vib_depth));
+        osc.SetFreq(freq);
+
+        return TheVoice::Process();
+    }
+
     virtual size_t MakeEvents(const Music::TimeSignature& ts,
                               int                         bars,
                               Music::ChordEventSet<>&     chords)
@@ -64,4 +85,8 @@ class TheAlto : public TheVoice
         // }
         // return events.Count();
     }
+
+  private:
+    Oscillator vib;
+
 };

@@ -140,6 +140,12 @@ class TheVoice
     daisysp::MoogLadder flt;
     daisysp::Adsr       ampEnv;
 
+    float GetBaseFrequency() const { return _baseFrequency; }
+    const Music::NoteEvent &GetCurrentNote() const 
+    {
+        return events[_currentNoteIndex];
+    }
+    
     virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne);
     Music::Note GetWeightedNote(float unitRandom, int& outPeriodOffset);
     float GetFreqForNote(Music::Note n, Music::Period p, float fc = 0.0f) const;
@@ -161,7 +167,10 @@ class TheVoice
     const float*                  _weights;
     size_t                        _weightCount;
     Music::PitchEngine            _pe;
+    float                         _baseFrequency;
     bool                          _gate;
     int                           _currentNoteIndex;
     char                          _noteBuf[16];
+
+    void SetBaseFrequency(float value);
 };

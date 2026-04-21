@@ -36,32 +36,66 @@ class TheSoprano : public TheVoice
 
     virtual const char* GetName() const override { return s_SOPRANO; }
 
+    virtual void Init(float sample_rate) override
+    {
+        TheVoice::Init(sample_rate);
+        vib.Init(sample_rate);
+        vib.SetWaveform(Oscillator::WAVE_SIN);
+        vib.SetFreq(5.5f); // Typical?
+    }
+
+    virtual float Process()
+    {
+        // Add vibrato to longer notes
+        if(GetCurrentNote().value > NoteValue::Eighth)
+        {
+            const float vib_depth = 0.0293f; // ~50 cents pitch multipler
+
+            float vib_val = vib.Process();
+
+            // Multipilcation scales the frequency exponentially (musically)
+            float freq = GetBaseFrequency() * (1.0f + (vib_val * vib_depth));
+            osc.SetFreq(freq);
+        }
+        return TheVoice::Process();
+    }
+
     virtual size_t MakeEvents(const Music::TimeSignature& ts,
                               int                         bars,
                               Music::ChordEventSet<>&     chords) override
     {
-        // First start with our "hit" pattern
         PatternEventSet<>      pattern;
-        const Music::NoteValue g = Music::NoteValue::Eighth;
+        const Music::NoteValue g       = Music::NoteValue::Eighth;
+        const float            density = randomRange(0.4, 0.9);
+        GeneratePattern(ts, bars, density, g, pattern);
+        return GenerateEventsFromPattern2(
+            pattern, chords, ts, GetScaleMap(), bars, g, events);
 
-        GeneratePattern(ts, bars, randomRange(0.4f, 0.8f),  g, pattern);
+        // // First start with our "hit" pattern
+        // PatternEventSet<>      pattern;
+        // const Music::NoteValue g = Music::NoteValue::Eighth;
+
+        // GeneratePattern(ts, bars, randomRange(0.6f, 0.9f), g, pattern);
 
 
-        events.Clear();
-        for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
-        {
-            if(pattern[i]) // Hit
-            {
-                int               periodOffset = 0;
-                const Music::Note n            = GetWeightedNote(
-                    randomRange(0.0f, 0.999999f), periodOffset);
-                events.Emplace(n, periodOffset, g);
-            }
-            else
-            {
-                events.Emplace(REST, 0, g);
-            }
-        }
-        return events.Count();
+        // events.Clear();
+        // for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
+        // {
+        //     if(pattern[i]) // Hit
+        //     {
+        //         int               periodOffset = 0;
+        //         const Music::Note n            = GetWeightedNote(
+        //             randomRange(0.0f, 0.999999f), periodOffset);
+        //         events.Emplace(n, periodOffset, g);
+        //     }
+        //     else
+        //     {
+        //         events.Emplace(REST, 0, g);
+        //     }
+        // }
+        // return events.Count();
     }
+
+  private:
+    Oscillator vib;
 };
