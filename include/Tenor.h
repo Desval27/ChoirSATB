@@ -46,7 +46,7 @@ class TheTenor : public TheVoice
         // First start with our "hit" pattern
         PatternEventSet<>      pattern;
         const Music::NoteValue g = Music::NoteValue::Quarter;
-        GeneratePattern(ts,
+        EuclidianPatternGenerator<>::GeneratePattern(ts,
                         bars,
                         randomRange(0.6, 0.9), // density
                         g,                     // granularity

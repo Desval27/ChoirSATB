@@ -66,7 +66,7 @@ class TheAlto : public TheVoice
         PatternEventSet<> pattern;
         const Music::NoteValue  g = Music::NoteValue::Quarter;
         const float density = randomRange(0.5, 0.8);
-        GeneratePattern(ts, bars, density, g, pattern);
+        EuclidianPatternGenerator<>::GeneratePattern(ts, bars, density, g, pattern);
         return GenerateEventsFromPattern(pattern, chords, ts, GetScaleMap(), bars, g, events);
         // events.Clear();
         // for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)

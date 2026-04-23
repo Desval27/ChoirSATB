@@ -67,7 +67,7 @@ class TheSoprano : public TheVoice
         PatternEventSet<>      pattern;
         const Music::NoteValue g       = Music::NoteValue::Eighth;
         const float            density = randomRange(0.4, 0.9);
-        GeneratePattern(ts, bars, density, g, pattern);
+        EuclidianPatternGenerator<>::GeneratePattern(ts, bars, density, g, pattern);
         return GenerateEventsFromPattern2(
             pattern, chords, ts, GetScaleMap(), bars, g, events);
 
