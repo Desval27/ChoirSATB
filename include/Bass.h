@@ -72,7 +72,7 @@ class TheBass : public TheVoice
                 // Split into two equal events
                 case 2:
                     n    = chords[i].root;
-                    len1 = chords[i].value / 2;
+                    len1 = static_cast<NoteValue>(chords[i].value / 2);
                     events.Emplace(n, 0, len1);
 
                     // Randomly choose between the 4th and 5th for the second note.
@@ -89,7 +89,7 @@ class TheBass : public TheVoice
                 case 3:
                 case 4:
                     n    = chords[i].root;
-                    len1 = chords[i].value / 4;
+                    len1 = static_cast<NoteValue>(chords[i].value / 4);
 
                     events.Emplace(n, 0, len1);
 
@@ -123,8 +123,7 @@ class TheBass : public TheVoice
                 case 5:
                     n    = chords[i].root;
                     len2 = min(ts.beatValue, chords[i].value);
-                    len1 = max(ts.beatValue,
-                               static_cast<NoteValue>(chords[i].value - len2));
+                    len1 = max(ts.beatValue, static_cast<NoteValue>(chords[i].value - len2));
                     events.Emplace(n, 0, len1);
 
                     // Randomly choose between the 4th and 5th for the second note.

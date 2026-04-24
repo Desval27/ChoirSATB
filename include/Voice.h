@@ -157,6 +157,8 @@ class TheVoice
                             Music::Articulation articulation
                             = Music::Articulation::Normal) const;
     int GetEventPulseOffset(int pulse) const;
+
+    const Music::Temperament GetTemperament() const { return *_t; }
     const Music::ScaleMap& GetScaleMap() const { return *_s; }
 
   private:
