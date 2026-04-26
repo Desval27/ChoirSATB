@@ -16,14 +16,15 @@ MONKEY_CPP_SOURCES = $(wildcard $(MONKEY_SRC)/*.cpp)
 
 APP_SRC = src
 APP_INC = include
-APP_CPP_SOURCES = $(wildcard $(APP_SRC)/*.cpp) $(wildcard $(APP_SRC)/Pages/*.cpp)
+#APP_CPP_SOURCES := $(wildcard $(APP_SRC)/*.cpp) $(wildcard $(APP_SRC)/Pages/*.cpp)
+APP_CPP_SOURCES := $(APP_SRC)/Main2.cpp
 
 # Sources
 CPP_SOURCES = \
 	$(APP_CPP_SOURCES) \
 	$(MONKEY_CPP_SOURCES)
 	
-C_DEFS += -DDAISY_PLATFORM -DPLATFORM=$(PLATFORM) -Wno-unused-variable
+C_DEFS += -DDAISY_PLATFORM -DPLATFORM=$(PLATFORM) -Wno-unused-variable -Wno-unused-function
 #OPT = -Og 
 OPT = -Os
 C_INCLUDES += -I$(APP_INC) -I$(MONKEY_INC)
