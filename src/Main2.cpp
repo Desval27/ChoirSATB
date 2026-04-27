@@ -4,91 +4,38 @@
 #include <daisysp.h>
 #include <dev/oled_ssd130x.h>
 
-#include <EncoderMonitor.h>
+#include <UIOverlord.h>
 
 #include <Music/MusicHelpers.h>
 
 using namespace daisysp;
 using namespace daisy;
-using Display = daisy::OledDisplay<daisy::SSD130xI2c128x64Driver>;
+using TheOverlord = UIOverlord<SSD130xI2c128x64Driver, 1, 0, 0>;
 
-DaisySeed hw;
-Display   display;
+DaisySeed   hw;
+TheOverlord uiOverlord;
+
+const TheOverlord::EncoderConfig encoderConfig[] = {
+    {seed::D20, seed::D16, seed::D19}, // ENCODER_1
+    //     // {seed::D0, seed::D1, seed::D2},   // ENCODER_1
+    //     // {seed::D3, seed::D4, seed::D5},   // ENCODER_2
+    //     // {seed::D6, seed::D7, seed::D8},   // ENCODER_3
+    //     // {seed::D9, seed::D10, seed::D15}, // ENCODER_4
+};
+const TheOverlord::ButtonConfig buttonConfig[] = {
+    {seed::D19},
+};
+const TheOverlord::PotConfig potConfig[] = {
+    {seed::A7},
+    {seed::A8},
+    {seed::A9},
+    {seed::A10},
+};
+
 
 Metro   clock;
 HiHat<> hat;
 
-enum EncoderId
-{
-    ENCODER_1,
-    // ENCODER_2,
-    // ENCODER_3,
-    // ENCODER_4,
-    ENCODER_COUNT
-};
-
-struct EncoderConfig
-{
-    Pin a;
-    Pin b;
-    Pin click;
-};
-
-Encoder                 encoders[ENCODER_COUNT];
-constexpr EncoderConfig encoder_config[ENCODER_COUNT] = {
-    {seed::D20, seed::D16, seed::D19}, // ENCODER_1
-    // {seed::D0, seed::D1, seed::D2},   // ENCODER_1
-    // {seed::D3, seed::D4, seed::D5},   // ENCODER_2
-    // {seed::D6, seed::D7, seed::D8},   // ENCODER_3
-    // {seed::D9, seed::D10, seed::D15}, // ENCODER_4
-};
-struct EncoderBackend
-{
-    Encoder* encoders;
-    int32_t Increment(uint16_t encoderID)
-    { return encoders[encoderID].Increment(); }
-};
-EncoderMonitor<EncoderBackend, ENCODER_COUNT> encoder_monitor;
-
-enum ButtonId
-{
-    BTN_ENCODER_1,
-    BTN_COUNT
-};
-
-struct ButtonBackend
-{
-    Switch* buttons;
-    bool    IsButtonPressed(uint16_t buttonID)
-    { return buttons[buttonID].Pressed(); }
-};
-ButtonBackend button_backend;
-Switch        buttons[BTN_COUNT];
-constexpr Pin button_config[BTN_COUNT] = {
-    seed::D19,
-};
-ButtonMonitor<ButtonBackend, BTN_COUNT> button_monitor;
-
-UI           ui;
-UiEventQueue event_queue;
-
-////////////////////////////////////////////////////////////////////////////////
-// Canvas Callbacks for UI
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-static void ClearCanvas(const UiCanvasDescriptor& canvas)
-{
-    auto* d = static_cast<Display*>(canvas.handle_);
-    d->Fill(false);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-static void FlushCanvas(const UiCanvasDescriptor& canvas)
-{
-    auto* d = static_cast<Display*>(canvas.handle_);
-    d->Update();
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main Audio Loop
@@ -111,82 +58,12 @@ void AudioCallback(AudioHandle::InterleavingInputBuffer  in,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void init_hardware()
-{
-    //
-    // Display Initialization.  Clear on startup.
-    //
-    Display::Config disp_cfg;
-    display.Init(disp_cfg);
-    display.Fill(false);
-    display.Update();
-
-    //
-    // Encoder(s) Initialization
-    //
-    for(size_t i = 0; i < ENCODER_COUNT; i++)
-    {
-        encoders[i].Init(
-            encoder_config[i].a, encoder_config[i].b, encoder_config[i].click);
-    }
-
-    //
-    // Button Initialization
-    //
-    for(size_t i = 0; i < BTN_COUNT; i++)
-    {
-        buttons[i].Init(button_config[i]);
-    }
-    button_backend.buttons = buttons;
-    button_monitor.Init(event_queue, button_backend);
-
-    //
-    // UI Initialization
-    //
-    UI::SpecialControlIds special;
-    special.menuEncoderId = ENCODER_1;
-    special.okBttnId      = BTN_ENCODER_1;
-
-    UiCanvasDescriptor oled_canvas;
-    oled_canvas.id_                = 0;
-    oled_canvas.handle_            = &display;
-    oled_canvas.updateRateMs_      = 30; // ~30 FPS
-    oled_canvas.screenSaverTimeOut = 5000;
-    oled_canvas.clearFunction_     = ClearCanvas;
-    oled_canvas.flushFunction_     = FlushCanvas;
-
-    ui.Init(event_queue, special, {oled_canvas}, 0);
-}
-
-void process_hardware(uint32_t nowMS)
-{
-    //
-    // Debounce all the things
-    //
-    // Buttons
-    for(size_t i = 0; i < BTN_COUNT; i++)
-        buttons[i].Debounce();
-    // Encoders
-    for(size_t i = 0; i < ENCODER_COUNT; i++)
-        encoders[i].Debounce();
-
-    //
-    // Event Queueing & UI Processing
-    //
-    button_monitor.Process();
-    encoder_monitor.Process();
-    ui.Process();
-}
-
-////////////////////////////////////////////////////////////////////////////////
 int main(void)
 {
     hw.Configure();
     hw.Init();
 
     hw.StartLog(false);
-
-    init_hardware();
 
     hw.SetAudioBlockSize(4);
     hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
@@ -195,6 +72,9 @@ int main(void)
     // Initialize our Audio Components
     //
     float sample_rate = hw.AudioSampleRate();
+
+    uiOverlord.Init(sample_rate, &hw.adc, encoderConfig, buttonConfig, potConfig);
+
     clock.Init(Music::BpmToFreq(60.0f), sample_rate);
 
     hat.Init(sample_rate);
@@ -206,6 +86,6 @@ int main(void)
     {
         uint32_t nowMS = System::GetNow();
 
-        process_hardware(nowMS);
+        uiOverlord.Process();
     }
 }
