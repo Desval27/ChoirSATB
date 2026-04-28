@@ -49,6 +49,8 @@ class TheApp
     bool GetRunning() const { return _running; }
     void SetRunning(bool value) { _running = value; }
     void ToggleRunning() { _running = !_running; }
+    void Randomize();
+    void Reset() { _gnome.Reset(); }
 
     TheVoice *           GetVoice(int index) { return _voices[index]; }
     const MyTimeSignature *GetTS() const { return &_ts; }
@@ -68,6 +70,7 @@ class TheApp
     volatile bool _running;
     int           _scaleIndex;
     int           _bars;
+    int           _iterations;
     TheVoice *    _voices[NUM_VOICES];
 
     TheBass    _bass;

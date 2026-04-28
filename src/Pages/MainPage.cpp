@@ -34,8 +34,8 @@ bool MainPage::OnCancelButton(uint8_t numberOfPresses, bool isRetriggering)
     if(numberOfPresses > 0)
     {
         TheApp& theApp = TheApp::instance();
-
-        theApp.SetScaleIndex(randomRange(0, static_cast<int>(NUM_SCALES - 1)));
+        theApp.Randomize();
+        theApp.Reset();
     }
     return true;
 }
@@ -66,9 +66,11 @@ bool MainPage::OnArrowButton(daisy::ArrowButtonType arrowType,
         {
             case daisy::ArrowButtonType::left:
                 theApp.SetScaleIndex(theApp.GetScaleIndex() - 1);
+                theApp.Reset();
                 break;
             case daisy::ArrowButtonType::right:
                 theApp.SetScaleIndex(theApp.GetScaleIndex() + 1);
+                theApp.Reset();
                 break;
             case daisy::ArrowButtonType::up: break;
             case daisy::ArrowButtonType::down: break;

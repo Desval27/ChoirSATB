@@ -18,15 +18,16 @@ TheApp &TheApp::instance(int bars)
 /// @param hw
 /// @param bars
 TheApp::TheApp(int bars)
-: _gnome(_ts, bars),
-  _refA4(440.0f, 9, 0),
-  _running(false),
-  _scaleIndex(0),
-  _bars(bars),
-  _bass(_ts, _refA4, _t, _s),
-  _tenor(_ts, _refA4, _t, _s),
-  _alto(_ts, _refA4, _t, _s),
-  _soprano(_ts, _refA4, _t, _s)
+    : _gnome(_ts, bars),
+      _refA4(440.0f, 9, 0),
+      _running(false),
+      _scaleIndex(0),
+      _bars(bars),
+      _iterations(0),
+      _bass(_ts, _refA4, _t, _s),
+      _tenor(_ts, _refA4, _t, _s),
+      _alto(_ts, _refA4, _t, _s),
+      _soprano(_ts, _refA4, _t, _s)
 {
     _voices[0] = &_bass;
     _voices[1] = &_tenor;
@@ -47,7 +48,7 @@ TheApp::TheApp(int bars)
 void TheApp::Init(float sample_rate)
 {
     // Voices
-    for(int i = 0; i < NUM_VOICES; i++)
+    for (int i = 0; i < NUM_VOICES; i++)
     {
         _voices[i]->Init(sample_rate);
     }
@@ -57,7 +58,7 @@ void TheApp::Init(float sample_rate)
 /// @brief
 void TheApp::Update()
 {
-    for(int i = 0; i < NUM_VOICES; i++)
+    for (int i = 0; i < NUM_VOICES; i++)
     {
         _voices[i]->Update();
     }
@@ -67,7 +68,9 @@ void TheApp::Update()
 /// @brief
 /// @param delta
 void TheApp::AdjustBPM(int delta)
-{ _config.bpm.Step(delta, false); }
+{
+    _config.bpm.Step(delta, false);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
@@ -82,7 +85,6 @@ size_t TheApp::MakeChordEvents(MyChordEventSet &chords)
         SCALE_TABLES[GetScaleIndex()].harmonicMode,
         NoteValue::Whole,
         chords);
-        
 
     // First start with our "hit" pattern
     // bool   pattern[MAX_EVENTS];
@@ -103,7 +105,7 @@ void TheApp::MakeEvents()
     MakeChordEvents(_chords);
 
     // Pass that onto our voices
-    for(int i = 0; i < NUM_VOICES; i++)
+    for (int i = 0; i < NUM_VOICES; i++)
         _voices[i]->MakeEvents(_ts, _bars, _chords);
 }
 
@@ -112,10 +114,14 @@ void TheApp::MakeEvents()
 /// @param value
 void TheApp::SetScaleIndex(int value)
 {
-    _scaleIndex = wrap(value, static_cast<int>(NUM_SCALES-1));
+    _scaleIndex = wrap(value, static_cast<int>(NUM_SCALES - 1));
     _s.SetDegrees(SCALE_TABLES[_scaleIndex].degrees);
-    MakeEvents();
-    _gnome.Reset();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void TheApp::Randomize()
+{
+    SetScaleIndex(randomRange(0, static_cast<int>(NUM_SCALES - 1)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -124,17 +130,33 @@ void TheApp::SetScaleIndex(int value)
 int TheApp::DoPulse()
 {
     int pulse = _gnome.DoPulse();
-    for(int i = 0; i < NUM_VOICES; i++)
+    if (pulse == 0)
+    {
+        // Just playing with it for now
+        if (_iterations == 4)
+        {
+            _iterations = 0;
+            Randomize();
+        }
+        else
+        {
+            _iterations++;
+        }
+        MakeEvents();
+    }
+
+    for (int i = 0; i < NUM_VOICES; i++)
     {
         _voices[i]->DoPulse(pulse);
     }
-    
+
     // This won't always work and needs to be improved.
     if (_gnome.RisingBeatEdge())
     {
         MyChordEvent chord = _chords.GetEventForPulse(pulse);
         // Later we need to let the chord produce the text to account for tones
-        chord.GetChordName(_s, _chordText, _t.DegreesPerPeriod());        
+        chord.GetChordName(_s, _chordText, _t.DegreesPerPeriod());
     }
+
     return pulse;
 }

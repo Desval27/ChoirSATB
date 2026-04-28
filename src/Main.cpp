@@ -159,8 +159,6 @@ void AudioCallback(AudioHandle::InterleavingInputBuffer  in,
                    AudioHandle::InterleavingOutputBuffer out,
                    size_t                                size)
 {
-    static int lastPulse = -1;
-
     //Prepare the audio block
     for(size_t i = 0; i < size; i += 2)
     {
@@ -170,14 +168,6 @@ void AudioCallback(AudioHandle::InterleavingInputBuffer  in,
             if(clock.Process())
             {
                 const int pulse = theApp.DoPulse();
-
-                // Sequence loop boundary: previous cycle ended and pulse wrapped.
-                if(lastPulse >= 0 && pulse < lastPulse)
-                {
-                    theApp.MakeEvents();
-                }
-                lastPulse = pulse;
-
                 // // Is this a beat boundary?
                 // if(theApp.gnome.RisingBeatEdge())
                 // {
