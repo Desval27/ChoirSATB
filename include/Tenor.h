@@ -29,12 +29,11 @@ class TheTenor : public TheVoice
     TheTenor(const Music::TimeSignature&   ts,
              const Music::TuningReference& tr,
              const Music::Temperament&     t,
-             const Music::ScaleMap&        s)
+             const Music::ScaleMap<>&      s)
     // -2 Relative to C4 = C2
     : TheVoice(ts, tr, t, s, -2, 0.2, 0.2, 0.4, 0.2)
     {
-        SetWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY,
-                   ArrayLen(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY));
+        SetWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY);
     }
 
     virtual const char* GetName() const override { return s_TENOR; }

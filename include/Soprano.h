@@ -29,10 +29,10 @@ class TheSoprano : public TheVoice
     TheSoprano(const Music::TimeSignature&   ts,
                const Music::TuningReference& tr,
                const Music::Temperament&     t,
-               const Music::ScaleMap&        s)
+               const Music::ScaleMap<>&      s)
     // 0 Relative to C4 = C4
     : TheVoice(ts, tr, t, s, 0, 0.1, 0.3, 0.6, 0.3)
-    { SetWeights(SCALE_WEIGHTS_7_UNIFORM, ArrayLen(SCALE_WEIGHTS_7_UNIFORM)); }
+    { SetWeights(SCALE_WEIGHTS_7_UNIFORM); }
 
     virtual const char* GetName() const override { return s_SOPRANO; }
 

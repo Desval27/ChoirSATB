@@ -27,12 +27,11 @@ class TheAlto : public TheVoice
     TheAlto(const Music::TimeSignature&   ts,
             const Music::TuningReference& tr,
             const Music::Temperament&     t,
-            const Music::ScaleMap&        s)
+            const Music::ScaleMap<>&      s)
     // -1 Relative to C4 = C3
     : TheVoice(ts, tr, t, s, -1, 0.1, 0.2, 0.4, 0.1)
     {
-        SetWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY,
-                   ArrayLen(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY));
+        SetWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY);
     }
 
     virtual const char* GetName() const override { return s_ALTO; }
@@ -67,7 +66,9 @@ class TheAlto : public TheVoice
         const Music::NoteValue  g = Music::NoteValue::Quarter;
         const float density = randomRange(0.5, 0.8);
         EuclidianPatternGenerator<>::GeneratePattern(ts, bars, density, g, pattern);
-        return GenerateEventsFromPattern(pattern, chords, ts, GetTemperament(), GetScaleMap(), bars, g, events);
+        return StyleANoteGenerator<>::GenerateEvents(pattern, chords, ts, GetTemperament(), GetScaleMap(), bars, g, events);
+
+        // return GenerateEventsFromPattern(pattern, chords, ts, t, s, bars, g, events);
         // events.Clear();
         // for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
         // {

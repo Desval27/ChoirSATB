@@ -33,12 +33,11 @@ class TheBass : public TheVoice
     TheBass(const TimeSignature&   ts,
             const TuningReference& tr,
             const Temperament&     t,
-            const ScaleMap&        s)
+            const ScaleMap<>&      s)
     // -3 Relative to C4 = C1
     : TheVoice(ts, tr, t, s, -3, 0.3, 0.1, 0.7, 0.2)
     {
-        SetWeights(SCALE_WEIGHTS_7_TONIC_HEAVY,
-                   ArrayLen(SCALE_WEIGHTS_7_TONIC_HEAVY));
+        SetWeights(SCALE_WEIGHTS_7_TONIC_HEAVY);
     }
 
     virtual const char* GetName() const override { return s_BASS; }

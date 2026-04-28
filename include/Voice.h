@@ -41,7 +41,7 @@ class TheVoice
     TheVoice(const Music::TimeSignature&   ts,
              const Music::TuningReference& tr,
              const Music::Temperament&     t,
-             const Music::ScaleMap&        s,
+             const Music::ScaleMap<>&      s,
              int                           periodOffset = 0,
              float                         attack       = 0.1,
              float                         decay        = 0.2,
@@ -75,104 +75,93 @@ class TheVoice
     bool GetGate() const { return _gate; }
 
     int8_t       GetWaveform() const { return config.waveform.Get(); }
-    virtual void SetWaveform(const int8_t value) 
-    { 
+    virtual void SetWaveform(const int8_t value)
+    {
         config.waveform.Set(value);
-        osc.SetWaveform(config.waveform.Get()); 
+        osc.SetWaveform(config.waveform.Get());
     }
 
     float GetVolume() const { return config.volume.Get(); }
     float GetVolumeAs0to1() const { return config.volume.GetAs0to1(); }
-    void SetVolume(float value) { config.volume.Set(value); }
-    void SetVolumeAs0to1(float value) { config.volume.SetFrom0to1(value); }
-    void AppendVolumeToString(daisy::FixedCapStrBase<char>& string) const { config.volume.AppentToString(string); }
+    void  SetVolume(float value) { config.volume.Set(value); }
+    void  SetVolumeAs0to1(float value) { config.volume.SetFrom0to1(value); }
+    void  AppendVolumeToString(daisy::FixedCapStrBase<char>& string) const
+    { config.volume.AppentToString(string); }
 
-    void SetWeights(const float weights[], size_t weightCount);
+    void SetWeights(const Music::WeightMap<Music::HEPATONIC>& weights)
+    { _weights = weights; }
 
     float GetAttack() const { return config.ampAdsr.attack.Get(); }
     float GetAttackAs0to1() const { return config.ampAdsr.attack.GetAs0to1(); }
     void  SetAttack(float value) { config.ampAdsr.attack.Set(value); }
     void  SetAttackAs0to1(float value)
-    {
-        config.ampAdsr.attack.SetFrom0to1(value);
-    }
+    { config.ampAdsr.attack.SetFrom0to1(value); }
     float GetDecay() const { return config.ampAdsr.decay.Get(); }
     float GetDecayAs0to1() const { return config.ampAdsr.decay.GetAs0to1(); }
     void  SetDecay(float value) { config.ampAdsr.decay.Set(value); }
     void  SetDecayAs0to1(float value)
-    {
-        config.ampAdsr.decay.SetFrom0to1(value);
-    }
+    { config.ampAdsr.decay.SetFrom0to1(value); }
     float GetSustain() const { return config.ampAdsr.sustain.Get(); }
     float GetSustainAs0to1() const
-    {
-        return config.ampAdsr.sustain.GetAs0to1();
-    }
+    { return config.ampAdsr.sustain.GetAs0to1(); }
     void SetSustain(float value) { config.ampAdsr.sustain.Set(value); }
     void SetSustainAs0to1(float value)
-    {
-        config.ampAdsr.sustain.SetFrom0to1(value);
-    }
+    { config.ampAdsr.sustain.SetFrom0to1(value); }
     float GetReleaseAs0to1() const
-    {
-        return config.ampAdsr.release.GetAs0to1();
-    }
+    { return config.ampAdsr.release.GetAs0to1(); }
     void SetRelease(float value) { config.ampAdsr.release.Set(value); }
     void SetReleaseAs0to1(float value)
-    {
-        config.ampAdsr.release.SetFrom0to1(value);
-    }
+    { config.ampAdsr.release.SetFrom0to1(value); }
 
     virtual size_t MakeEvents(const Music::TimeSignature& ts,
                               int                         bars,
-                              Music::ChordEventSet<> &chords)
+                              Music::ChordEventSet<>&     chords)
     {
         events.Clear();
         return events.Count();
     }
 
   protected:
-    VoiceConfig         config;
-    Music::NoteEvent    emptyNote;
+    VoiceConfig           config;
+    Music::NoteEvent      emptyNote;
     Music::NoteEventSet<> events;
 
     daisysp::Oscillator osc;
     daisysp::MoogLadder flt;
     daisysp::Adsr       ampEnv;
 
-    float GetBaseFrequency() const { return _baseFrequency; }
-    const Music::NoteEvent &GetCurrentNote() const 
-    {
-        return events[_currentNoteIndex];
-    }
-    
+    float                   GetBaseFrequency() const { return _baseFrequency; }
+    const Music::NoteEvent& GetCurrentNote() const
+    { return events[_currentNoteIndex]; }
+
     virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne);
-    Music::Note GetWeightedNote(float unitRandom, int& outPeriodOffset);
+    Music::Note  GetWeightedNote(float unitRandom, int& outPeriodOffset);
     float GetFreqForNote(Music::Note n, Music::Period p, float fc = 0.0f) const;
     Music::Degree GetMappedDegreeFromRoot(Music::Degree root,
                                           int           index,
                                           int&          outPeriodOffset) const;
-    bool IsEventRisingEdge(int pulse) const;
-    bool IsEventFallingEdge(int                 pulse,
-                            Music::Articulation articulation
-                            = Music::Articulation::Normal) const;
-    int GetEventPulseOffset(int pulse) const;
+    bool          IsEventRisingEdge(int pulse) const;
+    bool          IsEventFallingEdge(int                 pulse,
+                                     Music::Articulation articulation
+                                     = Music::Articulation::Normal) const;
+    int           GetEventPulseOffset(int pulse) const;
 
     const Music::Temperament GetTemperament() const { return *_t; }
-    const Music::ScaleMap& GetScaleMap() const { return *_s; }
+    const Music::ScaleMap<>& GetScaleMap() const { return *_s; }
 
   private:
     const Music::TimeSignature*   _ts;
     const Music::TuningReference* _tr;
     const Music::Temperament*     _t;
-    const Music::ScaleMap*        _s;
-    const float*                  _weights;
-    size_t                        _weightCount;
-    Music::PitchEngine            _pe;
-    float                         _baseFrequency;
-    bool                          _gate;
-    int                           _currentNoteIndex;
-    char                          _noteBuf[16];
+    const Music::ScaleMap<>*      _s;
+
+    Music::PitchEngine<> _pe;
+    Music::WeightMap<>   _weights;
+
+    float _baseFrequency;
+    bool  _gate;
+    int   _currentNoteIndex;
+    char  _noteBuf[16];
 
     void SetBaseFrequency(float value);
 };

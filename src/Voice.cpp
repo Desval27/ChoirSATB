@@ -12,7 +12,7 @@
 TheVoice::TheVoice(const Music::TimeSignature&   ts,
                    const Music::TuningReference& tr,
                    const Music::Temperament&     t,
-                   const Music::ScaleMap&        s,
+                   const Music::ScaleMap<>&      s,
                    int                           periodOffset,
                    float                         attack,
                    float                         decay,
@@ -28,8 +28,6 @@ TheVoice::TheVoice(const Music::TimeSignature&   ts,
   _tr(&tr),
   _t(&t),
   _s(&s),
-  _weights(nullptr),
-  _weightCount(0),
   _gate(false),
   _currentNoteIndex(-1)
 {
@@ -150,13 +148,6 @@ void TheVoice::Update()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void TheVoice::SetWeights(const float weights[], size_t weightCount)
-{
-    _weights     = weights;
-    _weightCount = weightCount;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param n
 /// @param p
@@ -174,8 +165,7 @@ float TheVoice::GetFreqForNote(Music::Note n, Music::Period p, float fc) const
 /// @return
 Music::Note TheVoice::GetWeightedNote(float unitRandom, int& outPeriodOffset)
 {
-    return _s->GetWeightedNote(
-        unitRandom, outPeriodOffset, _weights, _weightCount);
+    return _s->GetWeightedNote(unitRandom, outPeriodOffset, _weights);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

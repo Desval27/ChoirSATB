@@ -33,9 +33,8 @@ TheApp::TheApp(int bars)
     _voices[3] = &_soprano;
 
     _t.MakeEqualDivision(12, 2.0f);
-    _t.AttachNoteLabels(Music::NOTE_NAMES_12, ArrayLen(Music::NOTE_NAMES_12));
-    _t.AttachIntervalLabels(Music::INTERVAL_NAMES_12,
-                            ArrayLen(Music::INTERVAL_NAMES_12));
+    _t.AttachNoteLabels(Music::NOTE_NAMES_12);
+    _t.AttachIntervalLabels(Music::INTERVAL_NAMES_12);
 
     // Trigger the side-effects...bad code monkey, bad code monkey.
     SetScaleIndex(GetScaleIndex());
@@ -75,13 +74,16 @@ void TheApp::AdjustBPM(int delta)
 /// @return
 size_t TheApp::MakeChordEvents(ChordEventSet<> &chords)
 {
-    return GenerateStandardChordEvents(
-        _ts,
-        _s,
-        _bars,
-        SCALE_TABLES[GetScaleIndex()].harmonicMode,
-        NoteValue::Whole,
-        chords);
+    return 0;
+    // return GenerateStandardChordEvents(
+    //     _ts,
+    //     _s,
+    //     _bars,
+    //     SCALE_TABLES[GetScaleIndex()].harmonicMode,
+    //     NoteValue::Whole,
+    //     chords);
+        
+
     // First start with our "hit" pattern
     // bool   pattern[MAX_EVENTS];
     // size_t patternLen = Music::GeneratePattern(
@@ -110,9 +112,9 @@ void TheApp::MakeEvents()
 /// @param value
 void TheApp::SetScaleIndex(int value)
 {
-    _scaleIndex = wrap(value, D12StartIndex, D12StartIndex + D12Count - 1);
-    _s.SetDegrees(SCALE_TABLES[_scaleIndex].degrees,
-                  SCALE_TABLES[_scaleIndex].degreeCount);
+    // _scaleIndex = wrap(value, D12StartIndex, D12StartIndex + D12Count - 1);
+    // _s.SetDegrees(SCALE_TABLES[_scaleIndex].degrees,
+    //               SCALE_TABLES[_scaleIndex].degreeCount);
     MakeEvents();
     _gnome.Reset();
 }
@@ -131,7 +133,7 @@ int TheApp::DoPulse()
     // This won't always work and needs to be improved.
     if (_gnome.RisingBeatEdge())
     {
-        ChordEvent chord = _chords.GetEventForPulse(pulse);
+        ChordEvent<> chord = _chords.GetEventForPulse(pulse);
         // Later we need to let the chord produce the text to account for tones
         _t.GetNoteLabel(chord.root, _chordText, sizeof(_chordText));
 

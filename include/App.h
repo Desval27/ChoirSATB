@@ -61,7 +61,7 @@ class TheApp
     const TuningReference _refA4;
     const TimeSignature   _ts;
     Temperament           _t;
-    ScaleMap              _s;
+    ScaleMap<>            _s;
     ChordEventSet<>       _chords;
     char                  _chordText[16];
 

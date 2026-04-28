@@ -21,8 +21,8 @@ MONKEY_CPP_SOURCES = $(wildcard $(MONKEY_SRC)/*.cpp)
 
 APP_SRC = src
 APP_INC = include
-#APP_CPP_SOURCES := $(wildcard $(APP_SRC)/*.cpp) $(wildcard $(APP_SRC)/Pages/*.cpp)
-APP_CPP_SOURCES := $(APP_SRC)/Main2.cpp
+APP_CPP_SOURCES := $(filter-out $(APP_SRC)/Main2.cpp, $(wildcard $(APP_SRC)/*.cpp)) $(wildcard $(APP_SRC)/Pages/*.cpp)
+#APP_CPP_SOURCES := $(APP_SRC)/Main2.cpp
 
 # Sources
 CPP_SOURCES = \

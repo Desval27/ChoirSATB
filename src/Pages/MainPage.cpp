@@ -33,8 +33,8 @@ bool MainPage::OnCancelButton(uint8_t numberOfPresses, bool isRetriggering)
     {
         TheApp& theApp = TheApp::instance();
 
-        theApp.SetScaleIndex(
-            randomRange(D12StartIndex, D12StartIndex + D12Count));
+        // theApp.SetScaleIndex(
+        //     randomRange(D12StartIndex, D12StartIndex + D12Count));
     }
     return true;
 }
@@ -127,8 +127,8 @@ void MainPage::Draw(const daisy::UiCanvasDescriptor& canvas)
              theApp.GetBeat() + 1);
     d->WriteString(txtBuf, Font_11x18, true);
 
-    d->SetCursor(line2X, line2Y);
-    d->WriteString(SCALE_TABLES[theApp.GetScaleIndex()].name, Font_7x10, true);
+    // d->SetCursor(line2X, line2Y);
+    // d->WriteString(SCALE_TABLES[theApp.GetScaleIndex()].name, Font_7x10, true);
     d->SetCursor(line3X, line3Y);
     theApp.AppendVolumeToString(txt);
     txt.Append(" ");
