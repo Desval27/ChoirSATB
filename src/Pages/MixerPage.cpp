@@ -1,6 +1,9 @@
 #include <App.h>
 #include <Pages/MixerPage.h>
 
+using namespace daisy;
+using namespace daisysp;
+
 bool MixerPage::OnPotMoved(uint16_t potID, float newPosition)
 {
     TheApp&   theApp = TheApp::instance();

@@ -4,14 +4,14 @@
 #include <daisysp.h>
 #include <dev/oled_ssd130x.h>
 
-#include <Music/Music.h>
 #include <Music/Gnome.h>
 
-#include <Types.h>
-#include <Bass.h>
-#include <Tenor.h>
-#include <Alto.h>
-#include <Soprano.h>
+#include "Types.h"
+
+#include "Bass.h"
+#include "Tenor.h"
+#include "Alto.h"
+#include "Soprano.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
@@ -35,7 +35,7 @@ class TheApp
     void Init(float sample_rate);
     void Update();
 
-    size_t MakeChordEvents(ChordEventSet<> &chords);
+    size_t MakeChordEvents(MyChordEventSet &chords);
     void   MakeEvents();
 
     int  DoPulse();
@@ -51,19 +51,19 @@ class TheApp
     void ToggleRunning() { _running = !_running; }
 
     TheVoice *           GetVoice(int index) { return _voices[index]; }
-    const TimeSignature *GetTS() const { return &_ts; }
+    const MyTimeSignature *GetTS() const { return &_ts; }
     int                  GetScaleIndex() const { return _scaleIndex; }
     void                 SetScaleIndex(int value);
 
   private:
     SystemConfig          _config;
-    Gnome                 _gnome;
-    const TuningReference _refA4;
-    const TimeSignature   _ts;
-    Temperament           _t;
-    ScaleMap<>            _s;
-    ChordEventSet<>       _chords;
-    char                  _chordText[16];
+    Music::Gnome          _gnome;
+    const MyTuningReference _refA4;
+    const MyTimeSignature   _ts;
+    MyTemperament         _t;
+    MyScaleMap            _s;
+    MyChordEventSet       _chords;
+    MString<20>           _chordText;
 
     volatile bool _running;
     int           _scaleIndex;

@@ -1,5 +1,6 @@
 #include <App.h>
 
+using namespace Music;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
@@ -72,16 +73,15 @@ void TheApp::AdjustBPM(int delta)
 /// @brief
 /// @param chords
 /// @return
-size_t TheApp::MakeChordEvents(ChordEventSet<> &chords)
+size_t TheApp::MakeChordEvents(MyChordEventSet &chords)
 {
-    return 0;
-    // return GenerateStandardChordEvents(
-    //     _ts,
-    //     _s,
-    //     _bars,
-    //     SCALE_TABLES[GetScaleIndex()].harmonicMode,
-    //     NoteValue::Whole,
-    //     chords);
+    return GenerateStandardChordEvents(
+        _ts,
+        _s,
+        _bars,
+        SCALE_TABLES[GetScaleIndex()].harmonicMode,
+        NoteValue::Whole,
+        chords);
         
 
     // First start with our "hit" pattern
@@ -112,9 +112,8 @@ void TheApp::MakeEvents()
 /// @param value
 void TheApp::SetScaleIndex(int value)
 {
-    // _scaleIndex = wrap(value, D12StartIndex, D12StartIndex + D12Count - 1);
-    // _s.SetDegrees(SCALE_TABLES[_scaleIndex].degrees,
-    //               SCALE_TABLES[_scaleIndex].degreeCount);
+    _scaleIndex = wrap(value, static_cast<int>(NUM_SCALES-1));
+    _s.SetDegrees(SCALE_TABLES[_scaleIndex].degrees);
     MakeEvents();
     _gnome.Reset();
 }
@@ -133,10 +132,9 @@ int TheApp::DoPulse()
     // This won't always work and needs to be improved.
     if (_gnome.RisingBeatEdge())
     {
-        ChordEvent<> chord = _chords.GetEventForPulse(pulse);
+        MyChordEvent chord = _chords.GetEventForPulse(pulse);
         // Later we need to let the chord produce the text to account for tones
-        _t.GetNoteLabel(chord.root, _chordText, sizeof(_chordText));
-
+        chord.GetChordName(_s, _chordText, _t.DegreesPerPeriod());        
     }
     return pulse;
 }

@@ -47,7 +47,6 @@ Encoder      encoder;
 MyDisplay    display;
 UiEventQueue eventQueue;
 Metro        clock;
-// dsy_gpio           gate_output;
 ReverbSc verb;
 
 struct PotBackend
@@ -190,9 +189,6 @@ void AudioCallback(AudioHandle::InterleavingInputBuffer  in,
                 // {
                 //     // dsy_gpio_write(&gate_output, false);
                 // }
-
-                // // Pass the pulse on to our voices
-                // theApp.DoPulse(pulse);
             }
 
             float sig      = 0.0f;

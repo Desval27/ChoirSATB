@@ -1,6 +1,8 @@
 #include <App.h>
 #include <Pages/VoicePage.h>
 
+using namespace daisy;
+using namespace daisysp;
 
 bool VoicePage::OnArrowButton(ArrowButtonType arrowType,
                               uint8_t         numberOfPresses,

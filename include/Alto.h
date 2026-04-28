@@ -14,39 +14,34 @@
 #include "daisy_seed.h"
 #include "daisysp.h"
 
-#include <Monkey.h>
-#include <Music/Music.h>
-#include <Music/Temperament.h>
-#include <Music/ScaleMaps.h>
-
 #include "Voice.h"
 
 class TheAlto : public TheVoice
 {
-  public:
-    TheAlto(const Music::TimeSignature&   ts,
-            const Music::TuningReference& tr,
-            const Music::Temperament&     t,
-            const Music::ScaleMap<>&      s)
-    // -1 Relative to C4 = C3
-    : TheVoice(ts, tr, t, s, -1, 0.1, 0.2, 0.4, 0.1)
+public:
+    TheAlto(const MyTimeSignature &ts,
+            const MyTuningReference &tr,
+            const MyTemperament &t,
+            const MyScaleMap &s)
+        // -1 Relative to C4 = C3
+        : TheVoice(ts, tr, t, s, -1, 0.1, 0.2, 0.4, 0.1)
     {
-        SetWeights(SCALE_WEIGHTS_7_CHORD_TONE_HEAVY);
+        SetWeights(Music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY);
     }
 
-    virtual const char* GetName() const override { return s_ALTO; }
+    virtual const char *GetName() const override { return s_ALTO; }
 
-    virtual void Init(float sample_rate) override 
+    virtual void Init(float sample_rate) override
     {
         TheVoice::Init(sample_rate);
         vib.Init(sample_rate);
-        vib.SetWaveform(Oscillator::WAVE_SIN);
-        vib.SetFreq(5.5f);   // Typical?
+        vib.SetWaveform(daisysp::Oscillator::WAVE_SIN);
+        vib.SetFreq(5.5f); // Typical?
     }
 
-    virtual float Process() 
+    virtual float Process()
     {
-        const float vib_depth = 0.0293f;  // ~50 cents pitch multipler
+        const float vib_depth = 0.0293f; // ~50 cents pitch multipler
 
         float vib_val = vib.Process();
 
@@ -57,37 +52,18 @@ class TheAlto : public TheVoice
         return TheVoice::Process();
     }
 
-    virtual size_t MakeEvents(const Music::TimeSignature& ts,
-                              int                         bars,
-                              Music::ChordEventSet<>&     chords)
+    virtual size_t MakeEvents(const MyTimeSignature &ts,
+                              int bars,
+                              MyChordEventSet &chords)
     {
         // First start with our "hit" pattern
-        PatternEventSet<> pattern;
-        const Music::NoteValue  g = Music::NoteValue::Quarter;
+        MyPatternEventSet pattern;
+        const Music::NoteValue g = Music::NoteValue::Quarter;
         const float density = randomRange(0.5, 0.8);
-        EuclidianPatternGenerator<>::GeneratePattern(ts, bars, density, g, pattern);
-        return StyleANoteGenerator<>::GenerateEvents(pattern, chords, ts, GetTemperament(), GetScaleMap(), bars, g, events);
-
-        // return GenerateEventsFromPattern(pattern, chords, ts, t, s, bars, g, events);
-        // events.Clear();
-        // for(size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
-        // {
-        //     if(pattern[i]) // Hit
-        //     {
-        //         int         periodOffset = 0;
-        //         Music::Note n = GetWeightedNote(randomRange(0.0f, 0.999999f),
-        //                                         periodOffset);
-        //         events.Emplace(n, periodOffset, g);
-        //     }
-        //     else
-        //     {
-        //         events.Emplace(REST, 0, g);
-        //     }
-        // }
-        // return events.Count();
+        Music::EuclidianPatternGenerator<>::GeneratePattern(ts, bars, density, g, pattern);
+        return Music::StyleANoteGenerator<>::GenerateEvents(pattern, chords, ts, GetTemperament(), GetScaleMap(), bars, g, events);
     }
 
-  private:
-    Oscillator vib;
-
+private:
+    daisysp::Oscillator vib;
 };

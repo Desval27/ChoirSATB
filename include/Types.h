@@ -4,7 +4,22 @@
 #include <daisysp.h>
 #include <dev/oled_ssd130x.h>
 
+#include <Monkey.h>
+#include <Music/Music.h>
+
+///////////////////////////////////////////////////////////////////////////////
+// Aliases
+///////////////////////////////////////////////////////////////////////////////
 using MyDisplay = daisy::OledDisplay<daisy::SSD130xI2c128x64Driver>;
+using MyTuningReference = Music::TuningReference;
+using MyTimeSignature = Music::TimeSignature;   
+using MyTemperament = Music::Temperament<>;
+using MyScaleMap = Music::ScaleMap<>;
+using MyWeightMap = Music::WeightMap<Music::HEPATONIC>;
+using MyChordEvent = Music::ChordEvent<>;
+using MyChordEventSet = Music::ChordEventSet<>;
+using MyNoteEventSet = Music::NoteEventSet<>;
+using MyPatternEventSet = Music::PatternEventSet<>;
 
 enum ButtonIds
 {
@@ -31,7 +46,6 @@ enum EncoderIds
     ENCODER_COUNT
 };
 
-
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 struct SystemConfig
@@ -40,8 +54,8 @@ struct SystemConfig
     daisy::MappedIntValue transpose;
 
     SystemConfig()
-    : bpm(1, 300, 60, 1, 10, "BPM", false),
-      transpose(-12, 12, 0, 1, 1, "T", true)
+        : bpm(1, 300, 60, 1, 10, "BPM", false),
+          transpose(-12, 12, 0, 1, 1, "T", true)
     {
     }
 };
@@ -54,34 +68,34 @@ struct AdsrConfig
     daisy::MappedFloatValue release;
 
     AdsrConfig(float attack, float decay, float sustain, float release)
-    : attack(0.0,
-             1.0,
-             attack,
-             daisy::MappedFloatValue::Mapping::lin,
-             "s",
-             1,
-             false),
-      decay(0.0,
-            1.0,
-            decay,
-            daisy::MappedFloatValue::Mapping::lin,
-            "s",
-            1,
-            false),
-      sustain(0.0,
-              1.0,
-              sustain,
-              daisy::MappedFloatValue::Mapping::lin,
-              "%",
-              1,
-              false),
-      release(0.0,
-              1.0,
-              release,
-              daisy::MappedFloatValue::Mapping::lin,
-              "s",
-              1,
-              false)
+        : attack(0.0,
+                 1.0,
+                 attack,
+                 daisy::MappedFloatValue::Mapping::lin,
+                 "s",
+                 1,
+                 false),
+          decay(0.0,
+                1.0,
+                decay,
+                daisy::MappedFloatValue::Mapping::lin,
+                "s",
+                1,
+                false),
+          sustain(0.0,
+                  1.0,
+                  sustain,
+                  daisy::MappedFloatValue::Mapping::lin,
+                  "%",
+                  1,
+                  false),
+          release(0.0,
+                  1.0,
+                  release,
+                  daisy::MappedFloatValue::Mapping::lin,
+                  "s",
+                  1,
+                  false)
     {
     }
 
@@ -90,55 +104,55 @@ struct AdsrConfig
 
 struct VoiceConfig
 {
-    daisy::MappedIntValue   periodOffset;
+    daisy::MappedIntValue periodOffset;
     daisy::MappedFloatValue volume;
-    daisy::MappedIntValue   waveform;
-    AdsrConfig              lpfAdsr;
+    daisy::MappedIntValue waveform;
+    AdsrConfig lpfAdsr;
     daisy::MappedFloatValue lpf;
     daisy::MappedFloatValue lpfFreq;
     daisy::MappedFloatValue lpfRes;
     daisy::MappedFloatValue amp;
-    AdsrConfig              ampAdsr;
+    AdsrConfig ampAdsr;
 
-    VoiceConfig(int    periodOffset,
+    VoiceConfig(int periodOffset,
                 int8_t waveForm,
-                float  attack,
-                float  decay,
-                float  sustain,
-                float  release)
-    : periodOffset(-5, 5, periodOffset, 1, 1, "O", true),
-      volume(0, 1.0, 1.0, daisy::MappedFloatValue::Mapping::log, "dB", 2, false),
-      waveform(0,
-               daisysp::Oscillator::WAVE_LAST,
-               daisysp::Oscillator::WAVE_TRI,
-               1,
-               1,
-               "W",
-               false),
-      lpfAdsr(attack, decay, sustain, release),
-      lpf(0.0, 1.0, 0.0, daisy::MappedFloatValue::Mapping::log, "dB", 2, false),
-      lpfFreq(0.0f,
-              5000.0f,
-              2500.0f,
-              daisy::MappedFloatValue::Mapping::lin,
-              "hz",
-              0,
+                float attack,
+                float decay,
+                float sustain,
+                float release)
+        : periodOffset(-5, 5, periodOffset, 1, 1, "O", true),
+          volume(0, 1.0, 1.0, daisy::MappedFloatValue::Mapping::log, "dB", 2, false),
+          waveform(0,
+                   daisysp::Oscillator::WAVE_LAST,
+                   daisysp::Oscillator::WAVE_TRI,
+                   1,
+                   1,
+                   "W",
+                   false),
+          lpfAdsr(attack, decay, sustain, release),
+          lpf(0.0, 1.0, 0.0, daisy::MappedFloatValue::Mapping::log, "dB", 2, false),
+          lpfFreq(0.0f,
+                  5000.0f,
+                  2500.0f,
+                  daisy::MappedFloatValue::Mapping::lin,
+                  "hz",
+                  0,
+                  false),
+          lpfRes(0.0f,
+                 1.0f,
+                 0.0f,
+                 daisy::MappedFloatValue::Mapping::lin,
+                 "r",
+                 2,
+                 false),
+          amp(0.0f,
+              1.0f,
+              1.0f,
+              daisy::MappedFloatValue::Mapping::log,
+              "dB",
+              0.2,
               false),
-      lpfRes(0.0f,
-             1.0f,
-             0.0f,
-             daisy::MappedFloatValue::Mapping::lin,
-             "r",
-             2,
-             false),
-      amp(0.0f,
-          1.0f,
-          1.0f,
-          daisy::MappedFloatValue::Mapping::log,
-          "dB",
-          0.2,
-          false),
-      ampAdsr(attack, decay, sustain, release)
+          ampAdsr(attack, decay, sustain, release)
     {
     }
 };

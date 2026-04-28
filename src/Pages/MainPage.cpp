@@ -2,6 +2,8 @@
 #include <App.h>
 #include <Pages/MainPage.h>
 
+using namespace Music;
+
 extern daisy::UI                 ui;
 extern daisy::FullScreenItemMenu mainMenu;
 
@@ -33,8 +35,7 @@ bool MainPage::OnCancelButton(uint8_t numberOfPresses, bool isRetriggering)
     {
         TheApp& theApp = TheApp::instance();
 
-        // theApp.SetScaleIndex(
-        //     randomRange(D12StartIndex, D12StartIndex + D12Count));
+        theApp.SetScaleIndex(randomRange(0, static_cast<int>(NUM_SCALES - 1)));
     }
     return true;
 }
@@ -79,7 +80,7 @@ bool MainPage::OnArrowButton(daisy::ArrowButtonType arrowType,
 void MainPage::Draw(const daisy::UiCanvasDescriptor& canvas)
 {
     TheApp&         theApp = TheApp::instance();
-    FixedCapStr<16> txt;
+    daisy::FixedCapStr<16> txt;
     auto*           d = static_cast<MyDisplay*>(canvas.handle_);
     char            txtBuf[64];
 
@@ -127,8 +128,8 @@ void MainPage::Draw(const daisy::UiCanvasDescriptor& canvas)
              theApp.GetBeat() + 1);
     d->WriteString(txtBuf, Font_11x18, true);
 
-    // d->SetCursor(line2X, line2Y);
-    // d->WriteString(SCALE_TABLES[theApp.GetScaleIndex()].name, Font_7x10, true);
+    d->SetCursor(line2X, line2Y);
+    d->WriteString(SCALE_TABLES[theApp.GetScaleIndex()].name, Font_7x10, true);
     d->SetCursor(line3X, line3Y);
     theApp.AppendVolumeToString(txt);
     txt.Append(" ");

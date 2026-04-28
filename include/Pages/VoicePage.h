@@ -28,5 +28,5 @@ class VoicePage: public daisy::UiPage
   private:
     int _voiceIndex;
 
-    void DrawADSR(MyDisplay* d, const Rectangle& rect, TheVoice* v);
+    void DrawADSR(MyDisplay* d, const daisy::Rectangle& rect, TheVoice* v);
 };
