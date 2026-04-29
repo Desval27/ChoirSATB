@@ -2,18 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "../../../Monkey"
-		},
-		{
-			"path": "../../libDaisy/examples"
-		},
-		{
-			"path": "../../seed"
-		},
-		{
-			"path": "../../DaisySP/Source"
 		}
 	],
 	"settings": {}

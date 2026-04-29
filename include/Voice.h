@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#include <cmath>
+
 #include "daisy_seed.h"
 #include "daisysp.h"
 
@@ -38,18 +40,77 @@ public:
              const MyTuningReference &tr,
              const MyTemperament &t,
              const MyScaleMap &s,
-             int periodOffset = 0,
-             float attack = 0.1,
-             float decay = 0.2,
-             float sustain = 0.5,
-             float release = 0.2);
+             int periodOffset,
+             float attack,
+             float decay,
+             float sustain,
+             float release,
+             const MyWeightMap &weights)
+        : timeSignature(ts),
+          tuningReference(tr),
+          temperament(t),
+          scaleMap(s),
+          weights(weights),
+          config(periodOffset, daisysp::Oscillator::WAVE_TRI, attack, decay, sustain, release),
+          gate_(false),
+          currentNoteIndex_(-1)
+    {
+        events.Clear();
 
-    virtual void Init(float sample_rate);
-    virtual float Process();
-    virtual void Update();
+        const float rootC4Hz = temperament.FrequencyFromReference(Music::TemperedPitch(0, 0), tuningReference);
+        const float voiceRootHz = rootC4Hz * temperament.PeriodMultiplier(config.periodOffset);
 
-    const char *GetNoteText() const { return _noteBuf; }
+        pitchEngine.SetTemperament(&temperament);
+        pitchEngine.SetScaleMap(&scaleMap);
+        pitchEngine.SetRootHz(voiceRootHz);
+
+        noteBuf_.clear();
+    }
+
+    virtual void Init(float sample_rate)
+    {
+        // Set envelope parameters
+        osc.Init(sample_rate);
+        flt.Init(sample_rate);
+        ampEnv.Init(sample_rate);
+    }
+
+    virtual float Process()
+    {
+        osc.SetWaveform(config.waveform.Get());
+        float env_out = ampEnv.Process(gate_);
+        if (!std::isfinite(env_out))
+            env_out = 0.0f;
+        osc.SetAmp(env_out);
+        const float sig = osc.Process();
+        return std::isfinite(sig) ? sig : 0.0f;
+    }
+
+    virtual void Update()
+    {
+        if (currentNoteIndex_ < 0 || currentNoteIndex_ >= static_cast<int>(events.Count()))
+        {
+            noteBuf_.clear();
+            return;
+        }
+
+        // Update our text here outside of the main audio event handler
+        if (events[currentNoteIndex_].note == Music::REST)
+        {
+            noteBuf_.clear();
+        }
+        else
+        {
+            char noteName[6];
+            temperament.GetNoteLabel(events[currentNoteIndex_].note, noteName, sizeof(noteName));
+            noteBuf_.printf("%s-%d", noteName, 4 + config.periodOffset + events[currentNoteIndex_].period);
+        }
+    }
+
+    const char *GetNoteText() const { return noteBuf_.c_str(); }
+
     virtual const char *GetName() const = 0;
+
     const char *GetWaveformName() const
     {
         switch (GetWaveform())
@@ -75,8 +136,33 @@ public:
         }
     }
 
-    void DoPulse(int pulse);
-    bool GetGate() const { return _gate; }
+    void DoPulse(int pulse)
+    {
+        currentNoteIndex_ = events.GetEventIndexForPulse(pulse);
+        if (currentNoteIndex_ < 0 || currentNoteIndex_ >= static_cast<int>(events.Count()))
+        {
+            gate_ = false;
+            return;
+        }
+
+        const Music::NoteEvent &currentEvent = events[currentNoteIndex_];
+        if (IsEventRisingEdge(pulse))
+            gate_ = (currentEvent.note != Music::REST);
+        else if (IsEventFallingEdge(pulse))
+            gate_ = false;
+
+        ampEnv.SetAttackTime(config.ampAdsr.attack);
+        ampEnv.SetDecayTime(config.ampAdsr.decay);
+        ampEnv.SetSustainLevel(config.ampAdsr.sustain);
+        ampEnv.SetReleaseTime(config.ampAdsr.release);
+
+        if (currentEvent.note != Music::REST)
+        {
+            HandleNoteEvent(pulse, currentEvent);
+        }
+    }
+
+    bool GetGate() const { return gate_; }
 
     int8_t GetWaveform() const { return config.waveform.Get(); }
     virtual void SetWaveform(const int8_t value)
@@ -94,10 +180,10 @@ public:
         config.volume.AppentToString(string);
     }
 
-    void SetWeights(const MyWeightMap &weights)
-    {
-        _weights = weights;
-    }
+    // void SetWeights(const MyWeightMap &weights)
+    // {
+    //     _weights = weights;
+    // }
 
     float GetAttack() const { return config.ampAdsr.attack.Get(); }
     float GetAttackAs0to1() const { return config.ampAdsr.attack.GetAs0to1(); }
@@ -142,47 +228,141 @@ public:
     }
 
 protected:
+    const MyTimeSignature &timeSignature;
+    const MyTuningReference &tuningReference;
+    const MyTemperament &temperament;
+    const MyScaleMap &scaleMap;
+    const MyWeightMap &weights;
     VoiceConfig config;
+
+    MyPitchEngine pitchEngine;
+
     Music::NoteEvent emptyNote;
-    Music::NoteEventSet<> events;
+    MyNoteEventSet events;
 
     daisysp::Oscillator osc;
     daisysp::MoogLadder flt;
     daisysp::Adsr ampEnv;
 
-    float GetBaseFrequency() const { return _baseFrequency; }
+    float GetBaseFrequency() const { return baseFrequency_; }
+
     const Music::NoteEvent &GetCurrentNote() const
     {
-        return events[_currentNoteIndex];
+        return events[currentNoteIndex_];
     }
 
-    virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne);
-    Music::Note GetWeightedNote(float unitRandom, int &outPeriodOffset);
-    float GetFreqForNote(Music::Note n, Music::Period p, float fc = 0.0f) const;
+    virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne)
+    {
+        SetBaseFrequency(GetFreqForNote(ne.note, ne.period));
+    }
+
+    Music::Note GetWeightedNote(float unitRandom, int &outPeriodOffset)
+    {
+        return scaleMap.GetWeightedNote(unitRandom, outPeriodOffset, weights);
+    }
+
+    float GetFreqForNote(Music::Note n, Music::Period p, float fc = 0.0f) const
+    {
+        return pitchEngine.Frequency(Music::TemperedPitch(n, p, fc));
+    }
+
     Music::Degree GetMappedDegreeFromRoot(Music::Degree root,
                                           int index,
-                                          int &outPeriodOffset) const;
-    bool IsEventRisingEdge(int pulse) const;
-    bool IsEventFallingEdge(int pulse,
-                            Music::Articulation articulation = Music::Articulation::Normal) const;
-    int GetEventPulseOffset(int pulse) const;
+                                          int &outPeriodOffset) const
+    {
+        int rootIdx = scaleMap.GetIndexOfDegree(root);
+        return scaleMap.GetMappedDegree(rootIdx + index, outPeriodOffset);
+    }
 
-    const MyTemperament &GetTemperament() const { return *_t; }
-    const MyScaleMap &GetScaleMap() const { return *_s; }
+    bool IsEventRisingEdge(int pulse) const
+    {
+        return GetEventPulseOffset(pulse) == 0;
+    }
+
+    bool IsEventFallingEdge(int pulse, Music::Articulation articulation = Music::Articulation::Normal) const
+    {
+        if (events.Count() == 0 || pulse < 0)
+            return false;
+
+        const int totalPulses = events.GetTotalEventPulses();
+        if (totalPulses <= 0)
+            return false;
+
+        int previousPulse = pulse - 1;
+        if (pulse == 0)
+        {
+            if (totalPulses > 0)
+                previousPulse = totalPulses - 1;
+        }
+
+        const Music::NoteEvent &currentEvent = events.GetEventForPulse(pulse);
+        const Music::NoteEvent &previousEvent = events.GetEventForPulse(previousPulse);
+
+        // Always release when the sequence transitions from note to rest.
+        if (previousEvent.note != Music::REST && currentEvent.note == Music::REST)
+            return true;
+
+        // Legato keeps the gate high between adjacent note events.
+        if (articulation == Music::Articulation::Legato || currentEvent.note == Music::REST)
+            return false;
+
+        const int eventIdx = events.GetEventIndexForPulse(pulse);
+        if (eventIdx < 0 || eventIdx >= static_cast<int>(events.Count()))
+            return false;
+
+        const int eventPulseOffset = GetEventPulseOffset(pulse);
+        if (eventPulseOffset < 0)
+            return false;
+
+        const int span = static_cast<int>(events[eventIdx].value);
+        if (span <= 1)
+            return true;
+
+        float gateFraction = 0.90f; // Normal articulation.
+        if (articulation == Music::Articulation::Staccato)
+            gateFraction = 0.55f;
+
+        int releasePulseOffset = static_cast<int>(span * gateFraction);
+        if (releasePulseOffset < 0)
+            releasePulseOffset = 0;
+        if (releasePulseOffset > (span - 1))
+            releasePulseOffset = span - 1;
+
+        return eventPulseOffset == releasePulseOffset;
+    }
+
+    int GetEventPulseOffset(int pulse) const
+    {
+        if (events.Count() == 0 || pulse < 0)
+            return -1;
+
+        const int totalPulses = events.GetTotalEventPulses();
+        if (totalPulses <= 0)
+            return -1;
+
+        const int eventIdx = events.GetEventIndexForPulse(pulse);
+        if (eventIdx < 0 || eventIdx >= static_cast<int>(events.Count()))
+            return -1;
+
+        const int eventStartPulse = events.GetEventStartPulse(static_cast<size_t>(eventIdx));
+        return ((pulse % totalPulses) - eventStartPulse + totalPulses) % totalPulses;
+    }
+
+    // const MyTemperament &GetTemperament() const { return *_t; }
+    // const MyScaleMap &GetScaleMap() const { return *_s; }
 
 private:
-    const MyTimeSignature *_ts;
-    const MyTuningReference *_tr;
-    const MyTemperament *_t;
-    const MyScaleMap *_s;
+    float baseFrequency_;
+    bool gate_;
+    int currentNoteIndex_;
+    MString<16> noteBuf_;
 
-    Music::PitchEngine<> _pe;
-    Music::WeightMap<> _weights;
-
-    float _baseFrequency;
-    bool _gate;
-    int _currentNoteIndex;
-    char _noteBuf[16];
-
-    void SetBaseFrequency(float value);
+    void SetBaseFrequency(float value)
+    {
+        if (std::isfinite(value) && value > 0.0f)
+        {
+            baseFrequency_ = value;
+            osc.SetFreq(baseFrequency_);
+        }
+    }
 };

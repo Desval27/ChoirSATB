@@ -15,11 +15,14 @@ using MyTuningReference = Music::TuningReference;
 using MyTimeSignature = Music::TimeSignature;   
 using MyTemperament = Music::Temperament<>;
 using MyScaleMap = Music::ScaleMap<>;
+using MyPitchEngine = Music::PitchEngine<>;
 using MyWeightMap = Music::WeightMap<Music::HEPATONIC>;
 using MyChordEvent = Music::ChordEvent<>;
 using MyChordEventSet = Music::ChordEventSet<>;
 using MyNoteEventSet = Music::NoteEventSet<>;
 using MyPatternEventSet = Music::PatternEventSet<>;
+using MyEuclidianPatternGenerator = Music::EuclidianPatternGenerator<>;
+using MyStyleANoteGenerator = Music::StyleANoteGenerator<>;
 
 enum ButtonIds
 {

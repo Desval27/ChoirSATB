@@ -26,9 +26,8 @@ public:
                const MyTemperament &t,
                const MyScaleMap &s)
         // 0 Relative to C4 = C4
-        : TheVoice(ts, tr, t, s, 0, 0.1, 0.3, 0.6, 0.3)
+        : TheVoice(ts, tr, t, s, 0, 0.1, 0.3, 0.6, 0.3, Music::SCALE_WEIGHTS_7_UNIFORM)
     {
-        SetWeights(Music::SCALE_WEIGHTS_7_UNIFORM);
     }
 
     virtual const char *GetName() const override { return s_SOPRANO; }
@@ -63,9 +62,9 @@ public:
     {
         MyPatternEventSet pattern;
         const Music::NoteValue g = Music::NoteValue::Eighth;
-        const float density = randomRange(0.4, 0.9);
-        Music::EuclidianPatternGenerator<>::GeneratePattern(ts, bars, density, g, pattern);
-        return Music::StyleANoteGenerator<>::GenerateEvents(pattern, chords, ts, GetTemperament(), GetScaleMap(), bars, g, events);
+        const float density = randomRange(0.4f, 0.9f);
+        MyEuclidianPatternGenerator::GeneratePattern(ts, bars, density, g, pattern);
+        return MyStyleANoteGenerator::GenerateEvents(pattern, chords, ts, temperament, scaleMap, bars, g, weights, events);
     }
 
 private:

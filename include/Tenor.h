@@ -26,9 +26,8 @@ public:
              const MyTemperament &t,
              const MyScaleMap &s)
         // -2 Relative to C4 = C2
-        : TheVoice(ts, tr, t, s, -2, 0.2, 0.2, 0.4, 0.2)
+        : TheVoice(ts, tr, t, s, -2, 0.2, 0.2, 0.4, 0.2, Music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY)
     {
-        SetWeights(Music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY);
     }
 
     virtual const char *GetName() const override { return s_TENOR; }

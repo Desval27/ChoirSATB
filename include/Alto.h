@@ -24,9 +24,8 @@ public:
             const MyTemperament &t,
             const MyScaleMap &s)
         // -1 Relative to C4 = C3
-        : TheVoice(ts, tr, t, s, -1, 0.1, 0.2, 0.4, 0.1)
+        : TheVoice(ts, tr, t, s, -1, 0.1, 0.2, 0.4, 0.1, Music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY)
     {
-        SetWeights(Music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY);
     }
 
     virtual const char *GetName() const override { return s_ALTO; }
@@ -60,9 +59,17 @@ public:
         MyPatternEventSet pattern;
         const Music::NoteValue g = Music::NoteValue::Quarter;
         const float density = randomRange(0.5, 0.8);
-        Music::EuclidianPatternGenerator<>::GeneratePattern(ts, bars, density, g, pattern);
-        return Music::StyleANoteGenerator<>::GenerateEvents(pattern, chords, ts, GetTemperament(), GetScaleMap(), bars, g, events);
+        MyEuclidianPatternGenerator::GeneratePattern(ts, bars, density, g, pattern);
+        return MyStyleANoteGenerator::GenerateEvents(pattern, chords, ts, temperament, scaleMap, bars, g, weights, events);
     }
+        // static std::size_t GeneratePattern(const PatternEventSet<MAX_EVENTS> &pattern,
+        //                               const ChordEventSet<MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS> &chords,
+        //                               const TimeSignature &ts,
+        //                               const Temperament<MAX_DEGREES> &temperament,
+        //                               const ScaleMap<SCALE_DEGREES> &scale,
+        //                               int bars,
+        //                               NoteValue granularity,
+        //                               NoteEventSet<MAX_EVENTS> &events)
 
 private:
     daisysp::Oscillator vib;
