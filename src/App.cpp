@@ -7,10 +7,9 @@ using namespace Music;
 /// @param hw
 /// @param bars
 /// @return
-TheApp &TheApp::instance(int bars)
-{
-    static TheApp inst(bars);
-    return inst;
+TheApp &TheApp::instance(int bars) {
+  static TheApp inst(bars);
+  return inst;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -18,145 +17,117 @@ TheApp &TheApp::instance(int bars)
 /// @param hw
 /// @param bars
 TheApp::TheApp(int bars)
-    : _gnome(_ts, bars),
-      _refA4(440.0f, 9, 0),
-      _running(false),
-      _scaleIndex(0),
-      _bars(bars),
-      _iterations(0),
-      _bass(_ts, _refA4, _t, _s),
-      _tenor(_ts, _refA4, _t, _s),
-      _alto(_ts, _refA4, _t, _s),
-      _soprano(_ts, _refA4, _t, _s)
-{
-    _voices[0] = &_bass;
-    _voices[1] = &_tenor;
-    _voices[2] = &_alto;
-    _voices[3] = &_soprano;
+    : config_(), setup_(4, NoteValue::Quarter, 12, 2.0f),
+      tuningRef_(440.0f, 9, 0),
+      gnome_(setup_.timeSignature, setup_.bars), 
+      running_(false), scaleIndex_(0), iterations_(0),
+      bass_(setup_, tuningRef_), tenor_(setup_, tuningRef_),
+      alto_(setup_, tuningRef_), soprano_(setup_, tuningRef_) {
 
-    _t.MakeEqualDivision(12, 2.0f);
-    _t.AttachNoteLabels(Music::NOTE_NAMES_12);
-    _t.AttachIntervalLabels(Music::INTERVAL_NAMES_12);
+  voices_[0] = &bass_;
+  voices_[1] = &tenor_;
+  voices_[2] = &alto_;
+  voices_[3] = &soprano_;
 
-    // Trigger the side-effects...bad code monkey, bad code monkey.
-    SetScaleIndex(GetScaleIndex());
+  setup_.temperament.AttachNoteLabels(Music::NOTE_NAMES_12);
+  setup_.temperament.AttachIntervalLabels(Music::INTERVAL_NAMES_12);
+
+  // Trigger the side-effects...bad code monkey, bad code monkey.
+  SetScaleIndex(GetScaleIndex());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param sample_rate
-void TheApp::Init(float sample_rate)
-{
-    // Voices
-    for (int i = 0; i < NUM_VOICES; i++)
-    {
-        _voices[i]->Init(sample_rate);
-    }
+void TheApp::Init(float sample_rate) {
+  // Voices
+  for (int i = 0; i < NUM_VOICES; i++) {
+    voices_[i]->Init(sample_rate);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
-void TheApp::Update()
-{
-    for (int i = 0; i < NUM_VOICES; i++)
-    {
-        _voices[i]->Update();
-    }
+void TheApp::Update() {
+  for (int i = 0; i < NUM_VOICES; i++) {
+    voices_[i]->Update();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param delta
-void TheApp::AdjustBPM(int delta)
-{
-    _config.bpm.Step(delta, false);
-}
+void TheApp::AdjustBPM(int delta) { config_.bpm.Step(delta, false); }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param chords
 /// @return
-size_t TheApp::MakeChordEvents(MyChordEventSet &chords)
-{
-    return GenerateStandardChordEvents(
-        _ts,
-        _s,
-        _bars,
-        SCALE_TABLES[GetScaleIndex()].harmonicMode,
-        NoteValue::Whole,
-        chords);
+size_t TheApp::MakeChordEvents(MyChordEventSet &chords) {
+  return GenerateStandardChordEvents(setup_, NoteValue::Whole, chords);
 
-    // First start with our "hit" pattern
-    // bool   pattern[MAX_EVENTS];
-    // size_t patternLen = Music::GeneratePattern(
-    //     ts, BARS, 0.50f, Music::NoteValue::Quarter, pattern, ArrayLen(pattern));
-    // return Music::GenerateChordEventsFromPattern(pattern,
-    //                                              patternLen,
-    //                                              Music::NoteValue::Quarter,
-    //                                              eventsOut,
-    //                                              eventsOutLen);
+  // First start with our "hit" pattern
+  // bool   pattern[MAX_EVENTS];
+  // size_t patternLen = Music::GeneratePattern(
+  //     ts, BARS, 0.50f, Music::NoteValue::Quarter, pattern,
+  //     ArrayLen(pattern));
+  // return Music::GenerateChordEventsFromPattern(pattern,
+  //                                              patternLen,
+  //                                              Music::NoteValue::Quarter,
+  //                                              eventsOut,
+  //                                              eventsOutLen);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
-void TheApp::MakeEvents()
-{
-    // First establish our harmonic rhythm
-    MakeChordEvents(_chords);
+void TheApp::MakeEvents() {
+  // First establish our harmonic rhythm
+  MakeChordEvents(chords_);
 
-    // Pass that onto our voices
-    for (int i = 0; i < NUM_VOICES; i++)
-        _voices[i]->MakeEvents(_ts, _bars, _chords);
+  // Pass that onto our voices
+  for (int i = 0; i < NUM_VOICES; i++)
+    voices_[i]->MakeEvents(chords_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param value
-void TheApp::SetScaleIndex(int value)
-{
-    _scaleIndex = wrap(value, static_cast<int>(NUM_SCALES - 1));
-    _s.SetDegrees(SCALE_TABLES[_scaleIndex].degrees);
+void TheApp::SetScaleIndex(int value) {
+  scaleIndex_ = wrap(value, static_cast<int>(NUM_SCALES - 1));
+  setup_.scaleMap.SetDegrees(SCALE_TABLES[scaleIndex_].degrees);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void TheApp::Randomize()
-{
-    SetScaleIndex(randomRange(0, static_cast<int>(NUM_SCALES - 1)));
+void TheApp::Randomize() {
+  SetScaleIndex(randomRange(0, static_cast<int>(NUM_SCALES - 1)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param pulse
-int TheApp::DoPulse()
-{
-    int pulse = _gnome.DoPulse();
-    if (pulse == 0)
-    {
-        // Just playing with it for now
-        if (_iterations == 4)
-        {
-            _iterations = 0;
-            Randomize();
-        }
-        else
-        {
-            _iterations++;
-        }
-        MakeEvents();
+int TheApp::DoPulse() {
+  int pulse = gnome_.DoPulse();
+  if (pulse == 0) {
+    // Just playing with it for now
+    if (iterations_ == 4) {
+      iterations_ = 0;
+      Randomize();
+    } else {
+      iterations_++;
     }
+    MakeEvents();
+  }
 
-    for (int i = 0; i < NUM_VOICES; i++)
-    {
-        _voices[i]->DoPulse(pulse);
-    }
+  for (int i = 0; i < NUM_VOICES; i++) {
+    voices_[i]->DoPulse(pulse);
+  }
 
-    // This won't always work and needs to be improved.
-    if (_gnome.RisingBeatEdge())
-    {
-        MyChordEvent chord = _chords.GetEventForPulse(pulse);
-        // Later we need to let the chord produce the text to account for tones
-        chord.GetChordName(_s, _chordText, _t.DegreesPerPeriod());
-    }
+  // This won't always work and needs to be improved.
+  if (gnome_.RisingBeatEdge()) {
+    MyChordEvent chord = chords_.GetEventForPulse(pulse);
+    // Later we need to let the chord produce the text to account for tones
+    chord.GetChordName(setup_.scaleMap, chordText_, setup_.temperament.DegreesPerPeriod());
+  }
 
-    return pulse;
+  return pulse;
 }

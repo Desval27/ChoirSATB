@@ -2,7 +2,6 @@
 
 #include <daisy_seed.h>
 #include <daisysp.h>
-#include <dev/oled_ssd130x.h>
 
 #include <Music/Gnome.h>
 
@@ -20,8 +19,6 @@ class TheApp
   public:
     static TheApp &instance(int bars = 8);
 
-    static constexpr int MAX_EVENTS = 128;
-
     enum
     {
         THE_BASS = 0,
@@ -31,7 +28,6 @@ class TheApp
         NUM_VOICES
     };
 
-
     void Init(float sample_rate);
     void Update();
 
@@ -39,44 +35,55 @@ class TheApp
     void   MakeEvents();
 
     int  DoPulse();
-    int  GetBeat() const { return _gnome.GetBeat(); }
-    int  GetBar() const { return _gnome.GetBar(); }
-    int  GetBPM() const { return _config.bpm.Get(); }
+    int  GetBeat() const { return gnome_.GetBeat(); }
+    int  GetBar() const { return gnome_.GetBar(); }
+    int  GetBPM() const { return config_.bpm.Get(); }
     void AdjustBPM(int delta);
-    void AppendVolumeToString(daisy::FixedCapStrBase<char>& string) const { _config.bpm.AppentToString(string); }
+    void AppendVolumeToString(daisy::FixedCapStrBase<char>& string) const { config_.bpm.AppentToString(string); }
 
-    const char* GetChordText() const { return _chordText; }
-    bool GetRunning() const { return _running; }
-    void SetRunning(bool value) { _running = value; }
-    void ToggleRunning() { _running = !_running; }
+    const char* GetChordText() const { return chordText_; }
+    bool GetRunning() const { return running_; }
+    void SetRunning(bool value) { running_ = value; }
+    void ToggleRunning() { running_ = !running_; }
     void Randomize();
-    void Reset() { _gnome.Reset(); }
+    void Reset() { gnome_.Reset(); }
 
-    TheVoice *           GetVoice(int index) { return _voices[index]; }
-    const MyTimeSignature *GetTS() const { return &_ts; }
-    int                  GetScaleIndex() const { return _scaleIndex; }
+    TheVoice *           GetVoice(int index) { return voices_[index]; }
+
+    template <std::size_t N>
+    void GetTimingText(daisy::FixedCapStr<N> &text)
+    {
+      text.Clear();
+      text.AppendInt(setup_.timeSignature.beats);
+      text.Append('/');
+      text.AppendInt(setup_.timeSignature.GetDenominator());
+      text.Append(" ");
+      text.AppendInt(GetBar()+1);
+      text.Append(':');
+      text.AppendInt(GetBeat()+1);
+    }
+    
+    int                  GetScaleIndex() const { return scaleIndex_; }
     void                 SetScaleIndex(int value);
 
   private:
-    SystemConfig          _config;
-    Music::Gnome          _gnome;
-    const MyTuningReference _refA4;
-    const MyTimeSignature   _ts;
-    MyTemperament         _t;
-    MyScaleMap            _s;
-    MyChordEventSet       _chords;
-    MString<20>           _chordText;
+    SystemConfig          config_;
+    MySetup               setup_;
+    const MyTuningReference tuningRef_;
+    Music::Gnome          gnome_;
+    MyChordEventSet       chords_;
 
-    volatile bool _running;
-    int           _scaleIndex;
-    int           _bars;
-    int           _iterations;
-    TheVoice *    _voices[NUM_VOICES];
+    MString<20>           chordText_;
 
-    TheBass    _bass;
-    TheTenor   _tenor;
-    TheAlto    _alto;
-    TheSoprano _soprano;
+    volatile bool running_;
+    int           scaleIndex_;
+    int           iterations_;
+    TheVoice *    voices_[NUM_VOICES];
+
+    TheBass    bass_;
+    TheTenor   tenor_;
+    TheAlto    alto_;
+    TheSoprano soprano_;
 
     TheApp(int bars = 8);
 };

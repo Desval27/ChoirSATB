@@ -18,48 +18,36 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
-class TheTenor : public TheVoice
-{
+class TheTenor : public TheVoice {
 public:
-    TheTenor(const MyTimeSignature &ts,
-             const MyTuningReference &tr,
-             const MyTemperament &t,
-             const MyScaleMap &s)
-        // -2 Relative to C4 = C2
-        : TheVoice(ts, tr, t, s, -2, 0.2, 0.2, 0.4, 0.2, Music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY)
-    {
+  TheTenor(const MySetup &setup, const MyTuningReference &tr)
+      // -2 Relative to C4 = C2
+      : TheVoice(setup, tr, TENOR_REGISTER, 0.2, 0.2, 0.4, 0.2,
+                 Music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY) {}
+
+  virtual const char *GetName() const override { return s_TENOR; }
+
+  virtual size_t MakeEvents(MyChordEventSet &chords) {
+    // First start with our "hit" pattern
+    MyPatternEventSet pattern;
+    const Music::NoteValue g = Music::NoteValue::Quarter;
+    Music::EuclidianPatternGenerator<>::GeneratePattern(
+        setup_.timeSignature, setup_.bars, randomRange(0.6, 0.9), // density
+        g,                                                        // granularity
+        pattern);
+
+    events_.Clear();
+    for (size_t i = 0; i < pattern.Count() && !events_.AtCapacity(); i++) {
+      if (pattern[i]) // Hit
+      {
+        int periodOffset = 0;
+        Music::Note n =
+            GetWeightedNote(randomRange(0.0f, 0.999999f), periodOffset);
+        events_.Emplace(n, periodOffset, g);
+      } else {
+        events_.Emplace(Music::REST, 0, g);
+      }
     }
-
-    virtual const char *GetName() const override { return s_TENOR; }
-
-    virtual size_t MakeEvents(const MyTimeSignature &ts,
-                              int bars,
-                              MyChordEventSet &chords)
-    {
-        // First start with our "hit" pattern
-        MyPatternEventSet pattern;
-        const Music::NoteValue g = Music::NoteValue::Quarter;
-        Music::EuclidianPatternGenerator<>::GeneratePattern(ts,
-                                                     bars,
-                                                     randomRange(0.6, 0.9), // density
-                                                     g,                     // granularity
-                                                     pattern);
-
-        events.Clear();
-        for (size_t i = 0; i < pattern.Count() && !events.AtCapacity(); i++)
-        {
-            if (pattern[i]) // Hit
-            {
-                int periodOffset = 0;
-                Music::Note n = GetWeightedNote(randomRange(0.0f, 0.999999f),
-                                                periodOffset);
-                events.Emplace(n, periodOffset, g);
-            }
-            else
-            {
-                events.Emplace(Music::REST, 0, g);
-            }
-        }
-        return events.Count();
-    }
+    return events_.Count();
+  }
 };

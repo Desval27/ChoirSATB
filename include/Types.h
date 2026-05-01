@@ -11,43 +11,23 @@
 // Aliases
 ///////////////////////////////////////////////////////////////////////////////
 using MyDisplay = daisy::OledDisplay<daisy::SSD130xI2c128x64Driver>;
-using MyTuningReference = Music::TuningReference;
-using MyTimeSignature = Music::TimeSignature;   
-using MyTemperament = Music::Temperament<>;
-using MyScaleMap = Music::ScaleMap<>;
+using MySetup = Music::Setup<>;
 using MyPitchEngine = Music::PitchEngine<>;
+
+using MyTuningReference = Music::TuningReference;
 using MyWeightMap = Music::WeightMap<Music::HEPATONIC>;
 using MyChordEvent = Music::ChordEvent<>;
 using MyChordEventSet = Music::ChordEventSet<>;
 using MyNoteEventSet = Music::NoteEventSet<>;
 using MyPatternEventSet = Music::PatternEventSet<>;
 using MyEuclidianPatternGenerator = Music::EuclidianPatternGenerator<>;
+using MySimpleRandomPatternGenerator = Music::SimpleRandomPatternGenerator<>;
 using MyStyleANoteGenerator = Music::StyleANoteGenerator<>;
 
-enum ButtonIds
-{
-    BTN_ENCODER = 0,
-    BTN_RUN_STOP,
-    BTN_RANDOM,
-    BTN_PRIOR,
-    BTN_NEXT,
-    BTN_COUNT
-};
-
-enum PotIds
-{
-    POT_1 = 0,
-    POT_2,
-    POT_3,
-    POT_4,
-    POT_COUNT
-};
-
-enum EncoderIds
-{
-    ENCODER_1 = 0,
-    ENCODER_COUNT
-};
+constexpr int BASS_REGISTER = -3;
+constexpr int TENOR_REGISTER = -2;
+constexpr int ALTO_REGISTER = -1;
+constexpr int SOPRANO_REGISTER = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
