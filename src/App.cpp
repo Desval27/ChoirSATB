@@ -38,16 +38,6 @@ TheApp::TheApp(int bars)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
-/// @param sample_rate
-void TheApp::Init(float sample_rate) {
-  // Voices
-  for (int i = 0; i < NUM_VOICES; i++) {
-    voices_[i]->Init(sample_rate);
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/// @brief
 void TheApp::Update() {
   for (int i = 0; i < NUM_VOICES; i++) {
     voices_[i]->Update();
@@ -93,13 +83,13 @@ void TheApp::MakeEvents() {
 /// @brief
 /// @param value
 void TheApp::SetScaleIndex(int value) {
-  scaleIndex_ = wrap(value, static_cast<int>(NUM_SCALES - 1));
-  setup_.scaleMap.SetDegrees(SCALE_TABLES[scaleIndex_].degrees);
+  scaleIndex_ = wrap(value, static_cast<int>(ArrayLen(HEPATONIC_D12_SCALES) - 1));
+  setup_.scaleMap.SetScale(HEPATONIC_D12_SCALES[scaleIndex_]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void TheApp::Randomize() {
-  SetScaleIndex(randomRange(0, static_cast<int>(NUM_SCALES - 1)));
+  SetScaleIndex(randomRange(0, static_cast<int>(ArrayLen(HEPATONIC_D12_SCALES) - 1)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

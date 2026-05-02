@@ -28,8 +28,44 @@ class TheApp
         NUM_VOICES
     };
 
-    void Init(float sample_rate);
+    ///////////////////////////////////////////////////////////////////////////
+    /// @brief
+    /// @param sample_rate
+    void Init(float sample_rate)
+    {
+        // Voices
+        for(int i = 0; i < NUM_VOICES; i++)
+        {
+            voices_[i]->Init(sample_rate);
+        }
+
+        // For Fun
+        // bpmLfo_.Init(sample_rate);
+        // bpmLfo_.SetWaveform(daisysp::Oscillator::WAVE_SIN);
+        // bpmLfo_.SetFreq(0.001f);
+        // bpmLfo_.SetAmp(1.0f);
+    }
+
     void Update();
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// @brief 
+    /// @return 
+    float Process() 
+    {
+        const float voiceMix[NUM_VOICES] = {
+          0.30f, 0.25f, 0.25f, 0.20f,
+        };
+        //const float equalMix = 1.0f / (float)NUM_VOICES;
+        float sig = 0.0f;
+        for(int i = 0; i < NUM_VOICES; i++)
+        {
+            sig += (voices_[i]->Process() * voiceMix[i]);
+        }
+
+      // config_.bpm.SetFrom0to1(bpmLfo_.Process());
+      return sig;
+    }
 
     size_t MakeChordEvents(MyChordEventSet &chords);
     void   MakeEvents();
@@ -84,6 +120,8 @@ class TheApp
     TheTenor   tenor_;
     TheAlto    alto_;
     TheSoprano soprano_;
+
+    // daisysp::Oscillator bpmLfo_;
 
     TheApp(int bars = 8);
 };

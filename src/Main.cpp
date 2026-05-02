@@ -146,11 +146,7 @@ void AudioCallback(AudioHandle::InterleavingInputBuffer in,
       }
 
       float sig = 0.0f;
-      float equalMix = 1.0f / (float)theApp.NUM_VOICES;
-      for (int i = 0; i < theApp.NUM_VOICES; i++) {
-        sig += (theApp.GetVoice(i)->Process() * voiceVolumes[i] / 100.0f) *
-               equalMix;
-      }
+      sig += theApp.Process();
 
       float wetL = 0.0f;
       float wetR = 0.0f;

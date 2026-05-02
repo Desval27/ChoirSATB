@@ -98,7 +98,7 @@ protected:
     display.WriteString(text.Cstr(), Font_11x18, true);
 
     display.SetCursor(line2X, line2Y);
-    display.WriteString(Music::SCALE_TABLES[theApp.GetScaleIndex()].name, Font_7x10,
+    display.WriteString(Music::HEPATONIC_D12_SCALES[theApp.GetScaleIndex()].name, Font_7x10,
                         true);
     display.SetCursor(line3X, line3Y);
     theApp.AppendVolumeToString(txt);

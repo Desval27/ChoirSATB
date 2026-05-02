@@ -37,7 +37,7 @@ struct SystemConfig
     daisy::MappedIntValue transpose;
 
     SystemConfig()
-        : bpm(1, 300, 60, 1, 10, "BPM", false),
+        : bpm(30, 120, 60, 1, 10, "BPM", false),
           transpose(-12, 12, 0, 1, 1, "T", true)
     {
     }
