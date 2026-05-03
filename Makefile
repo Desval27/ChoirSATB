@@ -17,17 +17,21 @@ MONKEY_CPP_SOURCES = $(wildcard $(MONKEY_SRC)/*.cpp)
 MONKEY_DAYSEYE_DIR = ..
 MONKEY_DAYSEYE_SRC = $(MONKEY_DAYSEYE_DIR)/src
 MONKEY_DAYSEYE_INC = $(MONKEY_DAYSEYE_DIR)/include
+MONKEY_DAYSEYE_C_SOURCES = $(wildcard $(MONKEY_DAYSEYE_SRC)/*.c) 
 MONKEY_DAYSEYE_CPP_SOURCES = $(wildcard $(MONKEY_DAYSEYE_SRC)/*.cpp) 
 
 APP_SRC = src
 APP_INC = include
+APP_C_SOURCES := $(wildcard $(APP_SRC)/*.c)
 APP_CPP_SOURCES := $(filter-out $(APP_SRC)/Main2.cpp, $(wildcard $(APP_SRC)/*.cpp)) $(wildcard $(APP_SRC)/Pages/*.cpp)
 
 # Sources
-CPP_SOURCES = \
+CPP_SOURCES += \
 	$(APP_CPP_SOURCES) \
-	$(MONKEY_DAYSEYE_CPP_SOURCES) \
-	$(MONKEY_CPP_SOURCES)
+	$(MONKEY_DAYSEYE_CPP_SOURCES) 
+C_SOURCES += \
+	$(APP_C_SOURCES) \
+	$(MONKEY_DAYSEYE_C_SOURCES) 
 	
 C_DEFS += -DDAISY_PLATFORM -DPLATFORM=$(PLATFORM) -Wno-unused-variable -Wno-unused-function
 #OPT = -Og 
