@@ -2,7 +2,7 @@ TARGET = ChoirSATB
 APP_TYPE = BOOT_QSPI
 
 USE_DAISYSP_LGPL = 1
-USE_DEBUG = 0
+DEBUG := 1
 PLATFORM = DAISY_SEED
 
 # Library Locations
@@ -35,7 +35,7 @@ C_SOURCES += \
 	
 C_DEFS += -DDAISY_PLATFORM -DPLATFORM=$(PLATFORM) -Wno-unused-variable -Wno-unused-function
 #OPT = -Og 
-OPT = -Os
+#OPT = -Os
 C_INCLUDES += -I$(APP_INC) -I$(MONKEY_DAYSEYE_INC) -I$(MONKEY_INC)
 
 .PHONY: garp

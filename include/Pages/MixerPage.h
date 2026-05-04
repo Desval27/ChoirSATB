@@ -3,7 +3,7 @@
 #include <daisy_seed.h>
 #include <daisysp.h>
 
-#include <BasePage.h>
+#include <Pages/BasePage.h>
 
 class MixerPage : public BasePage<false> {
 public:
