@@ -2,7 +2,7 @@ TARGET = ChoirSATB
 APP_TYPE = BOOT_QSPI
 
 USE_DAISYSP_LGPL = 1
-DEBUG := 1
+#DEBUG := 1
 PLATFORM = DAISY_SEED
 
 # Library Locations

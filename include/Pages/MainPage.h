@@ -7,7 +7,7 @@
 #include <Music/Music.h>
 #include <Music/Tables.h>
 
-#include <BasePage.h>
+#include <Pages/BasePage.h>
 
 extern FullScreenItemMenu mainMenu;
 
