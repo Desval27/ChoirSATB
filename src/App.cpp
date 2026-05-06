@@ -55,6 +55,7 @@ void TheApp::AdjustBPM(int delta) { config_.bpm.Step(delta, false); }
 /// @return
 size_t TheApp::MakeChordEvents(MyChordEventSet &chords) {
   return GenerateStandardChordEvents(setup_, NoteValue::Whole, chords);
+  //return 0;
 
   // First start with our "hit" pattern
   // bool   pattern[MAX_EVENTS];
