@@ -74,7 +74,7 @@ class TheApp
     int  GetBeat() const { return gnome_.GetBeat(); }
     int  GetBar() const { return gnome_.GetBar(); }
     int  GetBPM() const { return config_.bpm.Get(); }
-    void AdjustBPM(int delta);
+    void AdjustBPM(int16_t delta);
     void AppendVolumeToString(daisy::FixedCapStrBase<char>& string) const { config_.bpm.AppentToString(string); }
 
     const char* GetChordText() const { return chordText_; }

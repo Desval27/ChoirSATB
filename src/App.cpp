@@ -7,7 +7,7 @@ using namespace Music;
 /// @param hw
 /// @param bars
 /// @return
-TheApp &TheApp::instance(int bars) {
+auto TheApp::instance(int bars) -> TheApp & {
   static TheApp inst(bars);
   return inst;
 }
@@ -17,8 +17,8 @@ TheApp &TheApp::instance(int bars) {
 /// @param hw
 /// @param bars
 TheApp::TheApp(int bars)
-    : config_(), setup_(4, NoteValue::Quarter, 12, 2.0f),
-      tuningRef_(440.0f, 9, 0),
+    : setup_(4, NoteValue::Quarter, 12, 2.0f),
+      tuningRef_(Music::BASE_HZ, Music::Note_M6, 0),
       gnome_(setup_.timeSignature, setup_.bars), 
       running_(false), scaleIndex_(0), iterations_(0),
       bass_(setup_, tuningRef_), tenor_(setup_, tuningRef_),
@@ -39,15 +39,15 @@ TheApp::TheApp(int bars)
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 void TheApp::Update() {
-  for (int i = 0; i < NUM_VOICES; i++) {
-    voices_[i]->Update();
+  for (auto & voice : voices_) {
+    voice->Update();
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param delta
-void TheApp::AdjustBPM(int delta) { config_.bpm.Step(delta, false); }
+void TheApp::AdjustBPM(int16_t delta) { config_.bpm.Step(delta, false); }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
@@ -76,8 +76,10 @@ void TheApp::MakeEvents() {
   MakeChordEvents(chords_);
 
   // Pass that onto our voices
-  for (int i = 0; i < NUM_VOICES; i++)
-    voices_[i]->MakeEvents(chords_);
+  for (auto & voice : voices_)
+  {
+    voice->MakeEvents(chords_);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -109,8 +111,8 @@ int TheApp::DoPulse() {
     MakeEvents();
   }
 
-  for (int i = 0; i < NUM_VOICES; i++) {
-    voices_[i]->DoPulse(pulse);
+  for (auto & voice : voices_) {
+    voice->DoPulse(pulse);
   }
 
   // This won't always work and needs to be improved.
