@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: CC0-1.0 */
 /**
  * @file Main.cpp
- * @brief 
+ * @brief
  * @author pfburdette <paul.f.burdette@gmail.com>
  *
  * @copyright This work is dedicated to the public domain under CC0 1.0.
@@ -27,18 +27,21 @@
 using namespace daisysp;
 using namespace daisy;
 
-enum {
-ENCODER_COUNT = 1,
-BUTTON_COUNT = 5,
-POT_COUNT = 4
+enum
+{
+  ENCODER_COUNT = 1,
+  BUTTON_COUNT = 5,
+  POT_COUNT = 4
 };
 
-using MyOverlord =
-    UIOverlord<SSD130xI2c128x64Driver, ENCODER_COUNT, BUTTON_COUNT, POT_COUNT,
-               ENCODER_1, // MenuEncoder
-               BUTTON_1,  // OK Button
-               BUTTON_2,  // Cancel Button
-               true>;
+using MyOverlord = UIOverlord<SSD130xI2c128x64Driver,
+                              ENCODER_COUNT,
+                              BUTTON_COUNT,
+                              POT_COUNT,
+                              ENCODER_1, // MenuEncoder
+                              BUTTON_1,  // OK Button
+                              BUTTON_2,  // Cancel Button
+                              true>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Hardware Configuration
@@ -57,7 +60,7 @@ const int kDefaultBPM = 60;
 DaisySeed hw;
 // A4 = 440 Hz in 12-EDO where C is degree 0 and A is degree 9.
 // TheApp theApp(BARS);
-TheApp &theApp = TheApp::instance(BARS);
+TheApp& theApp = TheApp::instance(BARS);
 MyOverlord uiOverlord;
 MainPage mainPage;
 MixerPage mixerPage;
@@ -68,17 +71,17 @@ VoicePage sopranoPage(TheApp::THE_SOPRANO);
 FullScreenItemMenu mainMenu;
 
 const MyOverlord::EncoderConfig encoderConfig[ENCODER_COUNT] = {
-    {seed::D20, seed::D16},
+  { seed::D20, seed::D16 },
 };
 const MyOverlord::ButtonConfig buttonConfig[BUTTON_COUNT] = {
-    {seed::D19}, // Encoder
-    {seed::D17}, {seed::D18}, {seed::D15}, {seed::D21},
+  { seed::D19 }, // Encoder
+  { seed::D17 }, { seed::D18 }, { seed::D15 }, { seed::D21 },
 };
 const MyOverlord::PotConfig potConfig[POT_COUNT] = {
-    {seed::A7},
-    {seed::A8},
-    {seed::A9},
-    {seed::A10},
+  { seed::A7 },
+  { seed::A8 },
+  { seed::A9 },
+  { seed::A10 },
 };
 
 Metro clock;
@@ -88,45 +91,67 @@ ReverbSc verb;
 // Runtime status
 ////////////////////////////////////////////////////////////////////////////////
 MappedFloatValue voiceVolumes[theApp.NUM_VOICES] = {
-    MappedFloatValue(1.0F, 100.0F, 100.0F, MappedFloatValue::Mapping::log, "%",
-                     0),
-    MappedFloatValue(1.0F, 100.0F, 100.0F, MappedFloatValue::Mapping::log, "%",
-                     0),
-    MappedFloatValue(1.0F, 100.0F, 100.0F, MappedFloatValue::Mapping::log, "%",
-                     0),
-    MappedFloatValue(1.0F, 100.0F, 100.0F, MappedFloatValue::Mapping::log, "%",
-                     0),
+  MappedFloatValue(1.0F,
+                   100.0F,
+                   100.0F,
+                   MappedFloatValue::Mapping::log,
+                   "%",
+                   0),
+  MappedFloatValue(1.0F,
+                   100.0F,
+                   100.0F,
+                   MappedFloatValue::Mapping::log,
+                   "%",
+                   0),
+  MappedFloatValue(1.0F,
+                   100.0F,
+                   100.0F,
+                   MappedFloatValue::Mapping::log,
+                   "%",
+                   0),
+  MappedFloatValue(1.0F,
+                   100.0F,
+                   100.0F,
+                   MappedFloatValue::Mapping::log,
+                   "%",
+                   0),
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // UI & Menu Structure
 ////////////////////////////////////////////////////////////////////////////////
 AbstractMenu::ItemConfig mainMenuItems[] = {
-    {.type = AbstractMenu::ItemType::openUiPageItem,
-     .text = "MIXER",
-     .asOpenUiPageItem{&mixerPage}},
-    {.type = AbstractMenu::ItemType::openUiPageItem,
-     .text = "BASS",
-     .asOpenUiPageItem{&bassPage}},
-    {.type = AbstractMenu::ItemType::openUiPageItem,
-     .text = "TENOR",
-     .asOpenUiPageItem{&tenorPage}},
-    {.type = AbstractMenu::ItemType::openUiPageItem,
-     .text = "ALTO",
-     .asOpenUiPageItem{&altoPage}},
-    {.type = AbstractMenu::ItemType::openUiPageItem,
-     .text = "SOPRANO",
-     .asOpenUiPageItem{&sopranoPage}},
-    {.type = AbstractMenu::ItemType::closeMenuItem, .text = "CLOSE"},
+  { .type = AbstractMenu::ItemType::openUiPageItem,
+    .text = "MIXER",
+    .asOpenUiPageItem{ &mixerPage } },
+  { .type = AbstractMenu::ItemType::openUiPageItem,
+    .text = "BASS",
+    .asOpenUiPageItem{ &bassPage } },
+  { .type = AbstractMenu::ItemType::openUiPageItem,
+    .text = "TENOR",
+    .asOpenUiPageItem{ &tenorPage } },
+  { .type = AbstractMenu::ItemType::openUiPageItem,
+    .text = "ALTO",
+    .asOpenUiPageItem{ &altoPage } },
+  { .type = AbstractMenu::ItemType::openUiPageItem,
+    .text = "SOPRANO",
+    .asOpenUiPageItem{ &sopranoPage } },
+  { .type = AbstractMenu::ItemType::closeMenuItem, .text = "CLOSE" },
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // Converts our current BPM to a clock frequency based on pulses per quarter
 // note.
-inline float BPMToClockFreq(int bpm) { return (static_cast<float>(bpm) * PPQN) / 60.0F; }
+inline float
+BPMToClockFreq(int bpm)
+{
+  return (static_cast<float>(bpm) * PPQN) / 60.0F;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
-void SetBPM(int bpm) {
+void
+SetBPM(int bpm)
+{
   float freq = BPMToClockFreq(bpm);
   clock.SetFreq(freq);
 }
@@ -134,8 +159,11 @@ void SetBPM(int bpm) {
 ////////////////////////////////////////////////////////////////////////////////
 // Main Audio Loop
 ////////////////////////////////////////////////////////////////////////////////
-void AudioCallback(AudioHandle::InterleavingInputBuffer in,
-                   AudioHandle::InterleavingOutputBuffer out, size_t size) {
+void
+AudioCallback(AudioHandle::InterleavingInputBuffer in,
+              AudioHandle::InterleavingOutputBuffer out,
+              size_t size)
+{
 
   uiOverlord.ProcessControls();
 
@@ -174,7 +202,9 @@ void AudioCallback(AudioHandle::InterleavingInputBuffer in,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void UpdateApp(uint32_t nowMS) {
+void
+UpdateApp(uint32_t nowMS)
+{
   static uint32_t lastUpdateMS = 0;
   if (nowMS - lastUpdateMS > APP_REFRESH_MS) {
     lastUpdateMS = nowMS;
@@ -183,7 +213,9 @@ void UpdateApp(uint32_t nowMS) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int main() {
+int
+main()
+{
   hw.Configure();
   hw.Init();
 
@@ -196,8 +228,10 @@ int main() {
   float sample_rate = hw.AudioSampleRate();
   clock.Init(BPMToClockFreq(kDefaultBPM), sample_rate);
 
-  mainMenu.Init(mainMenuItems, ArrayLen(mainMenuItems),
-                AbstractMenu::Orientation::leftRightSelectUpDownModify, true);
+  mainMenu.Init(mainMenuItems,
+                ArrayLen(mainMenuItems),
+                AbstractMenu::Orientation::leftRightSelectUpDownModify,
+                true);
 
   theApp.Init(sample_rate);
 
@@ -206,8 +240,8 @@ int main() {
   verb.SetFeedback(0.6F);
   verb.SetLpFreq(18000.0F);
 
-  uiOverlord.Init(sample_rate, mainPage, &hw.adc, encoderConfig, buttonConfig,
-                  potConfig);
+  uiOverlord.Init(
+    sample_rate, mainPage, &hw.adc, encoderConfig, buttonConfig, potConfig);
 
   hw.StartAudio(AudioCallback);
 

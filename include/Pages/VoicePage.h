@@ -6,27 +6,30 @@
 
 #include <Voice.h>
 
-class VoicePage: public daisy::UiPage
+class VoicePage : public daisy::UiPage
 {
-  public:
-    VoicePage(int voiceIndex) : _voiceIndex(voiceIndex) {}
+public:
+  VoicePage(int voiceIndex)
+    : _voiceIndex(voiceIndex)
+  {
+  }
 
-    virtual bool OnArrowButton(daisy::ArrowButtonType arrowType,
-                               uint8_t         numberOfPresses,
-                               bool            isRetriggering) override;
+  virtual bool OnArrowButton(daisy::ArrowButtonType arrowType,
+                             uint8_t numberOfPresses,
+                             bool isRetriggering) override;
 
-    virtual bool OnMenuEncoderTurned(int16_t  turns,
-                                     uint16_t stepsPerRevolution) override;
+  virtual bool OnMenuEncoderTurned(int16_t turns,
+                                   uint16_t stepsPerRevolution) override;
 
-    virtual bool OnPotMoved(uint16_t potID, float newPosition) override;
+  virtual bool OnPotMoved(uint16_t potID, float newPosition) override;
 
-    virtual bool OnCancelButton(uint8_t numberOfPresses,
-                                bool    isRetriggering) override;
+  virtual bool OnCancelButton(uint8_t numberOfPresses,
+                              bool isRetriggering) override;
 
-    void Draw(const daisy::UiCanvasDescriptor& canvas) override;
+  void Draw(const daisy::UiCanvasDescriptor& canvas) override;
 
-  private:
-    int _voiceIndex;
+private:
+  int _voiceIndex;
 
-    void DrawADSR(MyDisplay* d, const daisy::Rectangle& rect, TheVoice* v);
+  void DrawADSR(MyDisplay* d, const daisy::Rectangle& rect, TheVoice* v);
 };

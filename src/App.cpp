@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: CC0-1.0 */
 /**
  * @file App.cpp
- * @brief 
+ * @brief
  * @author pfburdette <paul.f.burdette@gmail.com>
  *
  * @copyright This work is dedicated to the public domain under CC0 1.0.
@@ -18,7 +18,9 @@ using namespace Music;
 /// @param hw
 /// @param bars
 /// @return
-auto TheApp::instance(int bars) -> TheApp & {
+auto
+TheApp::instance(int bars) -> TheApp&
+{
   static TheApp inst(bars);
   return inst;
 }
@@ -28,12 +30,17 @@ auto TheApp::instance(int bars) -> TheApp & {
 /// @param hw
 /// @param bars
 TheApp::TheApp(int bars)
-    : setup_(4, NoteValue::Quarter, 12, 2.0f),
-      tuningRef_(Music::BASE_HZ, Music::Note_M6, 0),
-      gnome_(setup_.timeSignature, setup_.bars), 
-      running_(false), scaleIndex_(0), iterations_(0),
-      bass_(setup_, tuningRef_), tenor_(setup_, tuningRef_),
-      alto_(setup_, tuningRef_), soprano_(setup_, tuningRef_) {
+  : setup_(4, NoteValue::Quarter, 12, 2.0f)
+  , tuningRef_(Music::BASE_HZ, Music::Note_M6, 0)
+  , gnome_(setup_.timeSignature, setup_.bars)
+  , running_(false)
+  , scaleIndex_(0)
+  , iterations_(0)
+  , bass_(setup_, tuningRef_)
+  , tenor_(setup_, tuningRef_)
+  , alto_(setup_, tuningRef_)
+  , soprano_(setup_, tuningRef_)
+{
 
   voices_[0] = &bass_;
   voices_[1] = &tenor_;
@@ -49,8 +56,10 @@ TheApp::TheApp(int bars)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
-void TheApp::Update() {
-  for (auto & voice : voices_) {
+void
+TheApp::Update()
+{
+  for (auto& voice : voices_) {
     voice->Update();
   }
 }
@@ -58,15 +67,21 @@ void TheApp::Update() {
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param delta
-void TheApp::AdjustBPM(int16_t delta) { config_.bpm.Step(delta, false); }
+void
+TheApp::AdjustBPM(int16_t delta)
+{
+  config_.bpm.Step(delta, false);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param chords
 /// @return
-size_t TheApp::MakeChordEvents(MyChordEventSet &chords) {
+size_t
+TheApp::MakeChordEvents(MyChordEventSet& chords)
+{
   return GenerateStandardChordEvents(setup_, NoteValue::Whole, chords);
-  //return 0;
+  // return 0;
 
   // First start with our "hit" pattern
   // bool   pattern[MAX_EVENTS];
@@ -82,13 +97,14 @@ size_t TheApp::MakeChordEvents(MyChordEventSet &chords) {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
-void TheApp::MakeEvents() {
+void
+TheApp::MakeEvents()
+{
   // First establish our harmonic rhythm
   MakeChordEvents(chords_);
 
   // Pass that onto our voices
-  for (auto & voice : voices_)
-  {
+  for (auto& voice : voices_) {
     voice->MakeEvents(chords_);
   }
 }
@@ -96,20 +112,28 @@ void TheApp::MakeEvents() {
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param value
-void TheApp::SetScaleIndex(int value) {
-  scaleIndex_ = wrap(value, static_cast<int>(ArrayLen(HEPATONIC_D12_SCALES) - 1));
+void
+TheApp::SetScaleIndex(int value)
+{
+  scaleIndex_ =
+    wrap(value, static_cast<int>(ArrayLen(HEPATONIC_D12_SCALES) - 1));
   setup_.scaleMap.SetScale(HEPATONIC_D12_SCALES[scaleIndex_]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void TheApp::Randomize() {
-  SetScaleIndex(randomRange(0, static_cast<int>(ArrayLen(HEPATONIC_D12_SCALES) - 1)));
+void
+TheApp::Randomize()
+{
+  SetScaleIndex(
+    randomRange(0, static_cast<int>(ArrayLen(HEPATONIC_D12_SCALES) - 1)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 /// @param pulse
-int TheApp::DoPulse() {
+int
+TheApp::DoPulse()
+{
   int pulse = gnome_.DoPulse();
   if (pulse == 0) {
     // Just playing with it for now
@@ -122,7 +146,7 @@ int TheApp::DoPulse() {
     MakeEvents();
   }
 
-  for (auto & voice : voices_) {
+  for (auto& voice : voices_) {
     voice->DoPulse(pulse);
   }
 
@@ -130,7 +154,8 @@ int TheApp::DoPulse() {
   if (gnome_.RisingBeatEdge()) {
     MyChordEvent chord = chords_.GetEventForPulse(pulse);
     // Later we need to let the chord produce the text to account for tones
-    chord.GetChordName(setup_.scaleMap, chordText_, setup_.temperament.DegreesPerPeriod());
+    chord.GetChordName(
+      setup_.scaleMap, chordText_, setup_.temperament.DegreesPerPeriod());
   }
 
   return pulse;
