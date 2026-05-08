@@ -1,3 +1,14 @@
+/* SPDX-License-Identifier: CC0-1.0 */
+/**
+ * @file Main.cpp
+ * @brief 
+ * @author pfburdette <paul.f.burdette@gmail.com>
+ *
+ * @copyright This work is dedicated to the public domain under CC0 1.0.
+ * To the extent possible under law, the author(s) have waived all copyright
+ * and related or neighboring rights to this software.
+ * See <http://creativecommons.org>
+ */
 #include <daisy_seed.h>
 #include <daisysp.h>
 #include <dev/oled_ssd130x.h>
@@ -16,9 +27,11 @@
 using namespace daisysp;
 using namespace daisy;
 
-#define ENCODER_COUNT 1
-#define BUTTON_COUNT 5
-#define POT_COUNT 4
+enum {
+ENCODER_COUNT = 1,
+BUTTON_COUNT = 5,
+POT_COUNT = 4
+};
 
 using MyOverlord =
     UIOverlord<SSD130xI2c128x64Driver, ENCODER_COUNT, BUTTON_COUNT, POT_COUNT,
@@ -75,13 +88,13 @@ ReverbSc verb;
 // Runtime status
 ////////////////////////////////////////////////////////////////////////////////
 MappedFloatValue voiceVolumes[theApp.NUM_VOICES] = {
-    MappedFloatValue(1.0f, 100.0f, 100.0f, MappedFloatValue::Mapping::log, "%",
+    MappedFloatValue(1.0F, 100.0F, 100.0F, MappedFloatValue::Mapping::log, "%",
                      0),
-    MappedFloatValue(1.0f, 100.0f, 100.0f, MappedFloatValue::Mapping::log, "%",
+    MappedFloatValue(1.0F, 100.0F, 100.0F, MappedFloatValue::Mapping::log, "%",
                      0),
-    MappedFloatValue(1.0f, 100.0f, 100.0f, MappedFloatValue::Mapping::log, "%",
+    MappedFloatValue(1.0F, 100.0F, 100.0F, MappedFloatValue::Mapping::log, "%",
                      0),
-    MappedFloatValue(1.0f, 100.0f, 100.0f, MappedFloatValue::Mapping::log, "%",
+    MappedFloatValue(1.0F, 100.0F, 100.0F, MappedFloatValue::Mapping::log, "%",
                      0),
 };
 
@@ -110,7 +123,7 @@ AbstractMenu::ItemConfig mainMenuItems[] = {
 ////////////////////////////////////////////////////////////////////////////////
 // Converts our current BPM to a clock frequency based on pulses per quarter
 // note.
-inline float BPMToClockFreq(int bpm) { return ((float)bpm * PPQN) / 60.0f; }
+inline float BPMToClockFreq(int bpm) { return (static_cast<float>(bpm) * PPQN) / 60.0F; }
 
 ////////////////////////////////////////////////////////////////////////////////
 void SetBPM(int bpm) {
@@ -145,17 +158,17 @@ void AudioCallback(AudioHandle::InterleavingInputBuffer in,
         // }
       }
 
-      float sig = 0.0f;
+      float sig = 0.0F;
       sig += theApp.Process();
 
-      float wetL = 0.0f;
-      float wetR = 0.0f;
+      float wetL = 0.0F;
+      float wetR = 0.0F;
       verb.Process(sig, sig, &wetL, &wetR);
-      out[i] = (sig * 0.8f) + (wetL * 0.2f);
-      out[i + 1] = (sig * 0.8f) + (wetR * 0.2f);
+      out[i] = (sig * 0.8F) + (wetL * 0.2F);
+      out[i + 1] = (sig * 0.8F) + (wetR * 0.2F);
     } else {
-      out[i] = 0.0f;
-      out[i + 1] = 0.0f;
+      out[i] = 0.0F;
+      out[i + 1] = 0.0F;
     }
   }
 }
@@ -170,7 +183,7 @@ void UpdateApp(uint32_t nowMS) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int main(void) {
+int main() {
   hw.Configure();
   hw.Init();
 
@@ -190,8 +203,8 @@ int main(void) {
 
   // setup reverb
   verb.Init(sample_rate);
-  verb.SetFeedback(0.6f);
-  verb.SetLpFreq(18000.0f);
+  verb.SetFeedback(0.6F);
+  verb.SetLpFreq(18000.0F);
 
   uiOverlord.Init(sample_rate, mainPage, &hw.adc, encoderConfig, buttonConfig,
                   potConfig);
