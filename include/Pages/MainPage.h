@@ -3,9 +3,9 @@
 #include <daisy_seed.h>
 #include <daisysp.h>
 
-#include <Monkey.h>
-#include <Music/Music.h>
-#include <Music/Tables.h>
+#include <monkey.hpp>
+#include <music/music.hpp>
+#include <music/music_tables.hpp>
 
 #include <Pages/BasePage.h>
 
@@ -25,7 +25,7 @@ public:
                        uint16_t stepsPerRevolution) override
   {
     if (turns != 0) {
-      auto& theApp = TApp::getInstance();
+      auto& theApp = TApp::get_instance();
       switch (encoderID) {
         case ENCODER_1:
           theApp.set_bpm(theApp.get_bpm() + turns);
@@ -40,7 +40,7 @@ public:
                 bool isRetriggering) override
   {
     if (numberOfPresses > 0 && !isRetriggering) {
-      auto& theApp = TApp::getInstance();
+      auto& theApp = TApp::get_instance();
       switch (buttonID) {
         case BUTTON_1:
           theApp.set_running(!theApp.get_running());
@@ -57,7 +57,7 @@ public:
   bool OnPotMoved(uint16_t potID, float newPosition) override
   {
     // Pot id corresponds to voice id
-    auto& theApp = TApp::getInstance();
+    auto& theApp = TApp::get_instance();
     for (std::size_t i = 0; i < theApp.voices.size(); i++) {
       if (i == potID) {
         theApp.voices[i].config_.volume.SetFrom0to1(newPosition);
@@ -94,7 +94,7 @@ protected:
   void InternalDraw(daisy::OneBitGraphicsDisplay& display,
                     uint32_t nowMS) override
   {
-    auto& theApp = TApp::getInstance();
+    auto& theApp = TApp::get_instance();
 
     // if(beatFlash)
     // {
@@ -144,7 +144,7 @@ protected:
 
     // display.SetCursor(line2X, line2Y);
     // display.WriteString(
-    //   Music::HEPATONIC_D12_SCALES[theApp.GetScaleIndex()].name,
+    //   music::HEPATONIC_D12_SCALES[theApp.GetScaleIndex()].name,
     //   Font_7x10,
     //   true);
     // display.SetCursor(line3X, line3Y);

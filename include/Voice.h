@@ -59,7 +59,7 @@ public:
     events_.Clear();
 
     const float rootC4Hz = setup_.temperament.FrequencyFromReference(
-      Music::TemperedPitch(0, 0), tuningReference_);
+      music::TemperedPitch(0, 0), tuningReference_);
     const float voiceRootHz =
       rootC4Hz * setup_.temperament.PeriodMultiplier(config_.periodOffset);
 
@@ -98,7 +98,7 @@ public:
     }
 
     // Update our text here outside of the main audio event handler
-    if (events_[currentNoteIndex_].note == Music::REST) {
+    if (events_[currentNoteIndex_].note == music::REST) {
       noteBuf_.clear();
     } else {
       char noteName[6];
@@ -148,9 +148,9 @@ public:
       return;
     }
 
-    const Music::NoteEvent& currentEvent = events_[currentNoteIndex_];
+    const music::NoteEvent& currentEvent = events_[currentNoteIndex_];
     if (IsEventRisingEdge(pulse))
-      gate_ = (currentEvent.note != Music::REST);
+      gate_ = (currentEvent.note != music::REST);
     else if (IsEventFallingEdge(pulse))
       gate_ = false;
 
@@ -159,7 +159,7 @@ public:
     ampEnv_.SetSustainLevel(config_.ampAdsr.sustain);
     ampEnv_.SetReleaseTime(config_.ampAdsr.release);
 
-    if (currentEvent.note != Music::REST) {
+    if (currentEvent.note != music::REST) {
       HandleNoteEvent(pulse, currentEvent);
     }
   }
@@ -226,7 +226,7 @@ protected:
   VoiceConfig config_;
   MyPitchEngine pitchEngine_;
 
-  Music::NoteEvent emptyNote_;
+  music::NoteEvent emptyNote_;
   MyNoteEventSet events_;
 
   daisysp::Oscillator osc_;
@@ -235,28 +235,28 @@ protected:
 
   float GetBaseFrequency() const { return baseFrequency_; }
 
-  const Music::NoteEvent& GetCurrentNote() const
+  const music::NoteEvent& GetCurrentNote() const
   {
     return events_[currentNoteIndex_];
   }
 
-  virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne)
+  virtual void HandleNoteEvent(int pulse, music::NoteEvent ne)
   {
     SetBaseFrequency(GetFreqForNote(ne.note, ne.period));
   }
 
-  Music::Note GetWeightedNote(float unitRandom, int& outPeriodOffset)
+  music::Note GetWeightedNote(float unitRandom, int& outPeriodOffset)
   {
     return setup_.scaleMap.GetWeightedNote(
       unitRandom, outPeriodOffset, weights_);
   }
 
-  float GetFreqForNote(Music::Note n, Music::Period p, float fc = 0.0f) const
+  float GetFreqForNote(music::Note n, music::Period p, float fc = 0.0f) const
   {
-    return pitchEngine_.Frequency(Music::TemperedPitch(n, p, fc));
+    return pitchEngine_.Frequency(music::TemperedPitch(n, p, fc));
   }
 
-  Music::Degree GetMappedDegreeFromRoot(Music::Degree root,
+  music::Degree GetMappedDegreeFromRoot(music::Degree root,
                                         int index,
                                         int& outPeriodOffset) const
   {
@@ -271,7 +271,7 @@ protected:
 
   bool IsEventFallingEdge(
     int pulse,
-    Music::Articulation articulation = Music::Articulation::Normal) const
+    music::Articulation articulation = music::Articulation::Normal) const
   {
     if (events_.Count() == 0 || pulse < 0)
       return false;
@@ -286,17 +286,17 @@ protected:
         previousPulse = totalPulses - 1;
     }
 
-    const Music::NoteEvent& currentEvent = events_.GetEventForPulse(pulse);
-    const Music::NoteEvent& previousEvent =
+    const music::NoteEvent& currentEvent = events_.GetEventForPulse(pulse);
+    const music::NoteEvent& previousEvent =
       events_.GetEventForPulse(previousPulse);
 
     // Always release when the sequence transitions from note to rest.
-    if (previousEvent.note != Music::REST && currentEvent.note == Music::REST)
+    if (previousEvent.note != music::REST && currentEvent.note == music::REST)
       return true;
 
     // Legato keeps the gate high between adjacent note events_.
-    if (articulation == Music::Articulation::Legato ||
-        currentEvent.note == Music::REST)
+    if (articulation == music::Articulation::Legato ||
+        currentEvent.note == music::REST)
       return false;
 
     const int eventIdx = events_.GetEventIndexForPulse(pulse);
@@ -312,7 +312,7 @@ protected:
       return true;
 
     float gateFraction = 0.90f; // Normal articulation.
-    if (articulation == Music::Articulation::Staccato)
+    if (articulation == music::Articulation::Staccato)
       gateFraction = 0.55f;
 
     int releasePulseOffset = static_cast<int>(span * gateFraction);

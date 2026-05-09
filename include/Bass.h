@@ -30,7 +30,7 @@ public:
                0.1,
                0.7,
                0.2,
-               Music::SCALE_WEIGHTS_7_TONIC_HEAVY)
+               music::SCALE_WEIGHTS_7_TONIC_HEAVY)
   {
   }
 
@@ -40,9 +40,9 @@ public:
   {
     // A direct rhythmic copy test for now.
     size_t maxSize = min(chords.Count(), events_.Capacity());
-    Music::NoteValue len1;
-    Music::NoteValue len2;
-    Music::Note n;
+    music::NoteValue len1;
+    music::NoteValue len2;
+    music::Note n;
     int periodOffset = 0;
 
     events_.Clear();
@@ -60,7 +60,7 @@ public:
         // Split into two equal events_
         case 2:
           n = chords[i].root;
-          len1 = static_cast<Music::NoteValue>(chords[i].value / 2);
+          len1 = static_cast<music::NoteValue>(chords[i].value / 2);
           events_.Emplace(n, 0, len1);
 
           // Randomly choose between the 4th and 5th for the second note.
@@ -75,7 +75,7 @@ public:
         case 3:
         case 4:
           n = chords[i].root;
-          len1 = static_cast<Music::NoteValue>(chords[i].value / 4);
+          len1 = static_cast<music::NoteValue>(chords[i].value / 4);
 
           events_.Emplace(n, 0, len1);
 
@@ -105,7 +105,7 @@ public:
           n = chords[i].root;
           len2 = min(setup_.timeSignature.beatValue, chords[i].value);
           len1 = max(setup_.timeSignature.beatValue,
-                     static_cast<Music::NoteValue>(chords[i].value - len2));
+                     static_cast<music::NoteValue>(chords[i].value - len2));
           events_.Emplace(n, 0, len1);
 
           // Randomly choose between the 4th and 5th for the second note.

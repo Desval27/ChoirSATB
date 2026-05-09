@@ -13,9 +13,9 @@
 #include <daisysp.h>
 #include <dev/oled_ssd130x.h>
 
-#include <Monkey.h>
-#include <Music/Music.h>
-#include <Music/Tables.h>
+#include <monkey.hpp>
+#include <music/music.hpp>
+#include <music/music_tables.hpp>
 
 #include <Pages/SynthVoicePage.h>
 #include <UIOverlord.h>
@@ -69,7 +69,7 @@ DaisySeed hw;
 Metro clock;
 // ReverbSc verb;
 
-MyApp& theApp = MyApp::getInstance();
+MyApp& theApp = MyApp::get_instance();
 MyOverlord uiOverlord;
 MyMainPage mainPage;
 FullScreenItemMenu mainMenu;
@@ -90,7 +90,7 @@ struct OpenSynthVoicePageContext
 /// @brief
 /// @param rawContext
 void
-OpenSynthVoicePage(void* rawContext)
+open_synth_voice_page(void* rawContext)
 {
   auto* context = static_cast<OpenSynthVoicePageContext*>(rawContext);
   context->page->Bind(*context->config);
@@ -114,16 +114,16 @@ AbstractMenu::ItemConfig mainMenuItems[] = {
     .asOpenUiPageItem{ &mixerPage } },
   { .type = AbstractMenu::ItemType::callbackFunctionItem,
     .text = "BASS",
-    .asCallbackFunctionItem{ OpenSynthVoicePage, &voicePageContexts[0] } },
+    .asCallbackFunctionItem{ open_synth_voice_page, &voicePageContexts[0] } },
   { .type = AbstractMenu::ItemType::callbackFunctionItem,
     .text = "TENOR",
-    .asCallbackFunctionItem{ OpenSynthVoicePage, &voicePageContexts[1] } },
+    .asCallbackFunctionItem{ open_synth_voice_page, &voicePageContexts[1] } },
   { .type = AbstractMenu::ItemType::callbackFunctionItem,
     .text = "ALTO",
-    .asCallbackFunctionItem{ OpenSynthVoicePage, &voicePageContexts[2] } },
+    .asCallbackFunctionItem{ open_synth_voice_page, &voicePageContexts[2] } },
   { .type = AbstractMenu::ItemType::callbackFunctionItem,
     .text = "SOPRANO",
-    .asCallbackFunctionItem{ OpenSynthVoicePage, &voicePageContexts[3] } },
+    .asCallbackFunctionItem{ open_synth_voice_page, &voicePageContexts[3] } },
   { .type = AbstractMenu::ItemType::closeMenuItem, .text = "CLOSE" },
 };
 
@@ -131,9 +131,9 @@ AbstractMenu::ItemConfig mainMenuItems[] = {
 /// @brief
 /// @param bpm
 void
-SetBPM(float bpm)
+set_bpm(float bpm)
 {
-  clock.SetFreq(Music::BpmToFreq(bpm, PPQN));
+  clock.SetFreq(music::BpmToFreq(bpm, PPQN));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -153,9 +153,9 @@ AudioCallback(AudioHandle::InterleavingInputBuffer in,
 
     if (theApp.get_running()) {
       if (tick)
-        theApp.HandlePulse();
+        theApp.handle_pulse();
 
-      auto [sigL, sigR] = theApp.Process();
+      auto [sigL, sigR] = theApp.process();
 
       out[i] = sigL;
       out[i + 1] = sigR;
@@ -189,10 +189,10 @@ AudioCallback(AudioHandle::InterleavingInputBuffer in,
 /// @brief
 /// @param sample_rate
 void
-InitComponents(float sample_rate)
+init_components(float sample_rate)
 {
-  theApp.Init(sample_rate);
-  clock.Init(Music::BpmToFreq(theApp.get_bpm(), PPQN), sample_rate);
+  theApp.init(sample_rate);
+  clock.Init(music::BpmToFreq(theApp.get_bpm(), PPQN), sample_rate);
 
   // setup reverb
   // verb.Init(sample_rate);
@@ -204,7 +204,7 @@ InitComponents(float sample_rate)
 /// @brief
 /// @param sample_rate
 void
-InitUi(float sample_rate)
+init_ui(float sample_rate)
 {
   mainMenu.Init(mainMenuItems,
                 ArrayLen(mainMenuItems),
@@ -228,22 +228,22 @@ main()
   hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
 
   float sample_rate = hw.AudioSampleRate();
-  InitComponents(sample_rate);
-  InitUi(sample_rate);
+  init_components(sample_rate);
+  init_ui(sample_rate);
 
   hw.StartAudio(AudioCallback);
 
   // float lastBPM = theApp.GetBPM();
   // uint32_t lastRefreshMS = 0;
   while (1) {
-    SetBPM(theApp.get_bpm());
+    set_bpm(theApp.get_bpm());
     uiOverlord.ProcessUi(); // Update all Ui elements and and event queues.
-    theApp.Update(System::GetNow());
+    theApp.update(System::GetNow());
     // uint32_t nowMS = System::GetNow();
 
     // if (lastBPM != theApp.GetBPM()) {
     //   lastBPM = theApp.GetBPM();
-    //   SetBPM(lastBPM);
+    //   set_bpm(lastBPM);
     // }
 
     // UpdateApp(nowMS);

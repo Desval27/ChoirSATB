@@ -32,7 +32,7 @@ TheApp::instance(int bars) -> TheApp&
 /// @param bars
 TheApp::TheApp(int bars)
   : setup_(4, NoteValue::Quarter, 12, 2.0f)
-  , tuningRef_(Music::BASE_HZ, Music::Note_M6, 0)
+  , tuningRef_(music::BASE_HZ, music::Note_M6, 0)
   , gnome_(setup_.timeSignature, setup_.bars)
   , running_(false)
   , scaleIndex_(0)
@@ -48,8 +48,8 @@ TheApp::TheApp(int bars)
   voices_[2] = &alto_;
   voices_[3] = &soprano_;
 
-  setup_.temperament.AttachNoteLabels(Music::NOTE_NAMES_12);
-  setup_.temperament.AttachIntervalLabels(Music::INTERVAL_NAMES_12);
+  setup_.temperament.AttachNoteLabels(music::NOTE_NAMES_12);
+  setup_.temperament.AttachIntervalLabels(music::INTERVAL_NAMES_12);
 
   // Trigger the side-effects...bad code monkey, bad code monkey.
   SetScaleIndex(GetScaleIndex());
@@ -86,12 +86,12 @@ TheApp::MakeChordEvents(MyChordEventSet& chords)
 
   // First start with our "hit" pattern
   // bool   pattern[MAX_EVENTS];
-  // size_t patternLen = Music::GeneratePattern(
-  //     ts, BARS, 0.50f, Music::NoteValue::Quarter, pattern,
+  // size_t patternLen = music::GeneratePattern(
+  //     ts, BARS, 0.50f, music::NoteValue::Quarter, pattern,
   //     ArrayLen(pattern));
-  // return Music::GenerateChordEventsFromPattern(pattern,
+  // return music::GenerateChordEventsFromPattern(pattern,
   //                                              patternLen,
-  //                                              Music::NoteValue::Quarter,
+  //                                              music::NoteValue::Quarter,
   //                                              eventsOut,
   //                                              eventsOutLen);
 }

@@ -28,7 +28,7 @@ public:
                0.2,
                0.4,
                0.1,
-               Music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY)
+               music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY)
   {
   }
 
@@ -59,7 +59,7 @@ public:
   {
     // First start with our "hit" pattern
     MyPatternEventSet pattern;
-    const Music::NoteValue g = Music::NoteValue::Quarter;
+    const music::NoteValue g = music::NoteValue::Quarter;
     const float density = randomRange(0.5, 0.8);
 
     MySimpleRandomPatternGenerator::GeneratePattern(

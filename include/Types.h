@@ -15,18 +15,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 using MyApp = ChoirSATB<4>;
 using MyDisplay = daisy::OledDisplay<daisy::SSD130xI2c128x64Driver>;
-using MySetup = Music::Setup<>;
-using MyPitchEngine = Music::PitchEngine<>;
+using MySetup = music::Setup<>;
+using MyPitchEngine = music::PitchEngine<>;
 
-using MyTuningReference = Music::TuningReference;
-using MyWeightMap = Music::WeightMap<Music::HEPATONIC>;
-using MyChordEvent = Music::ChordEvent<>;
-using MyChordEventSet = Music::ChordEventSet<>;
-using MyNoteEventSet = Music::NoteEventSet<>;
-using MyPatternEventSet = Music::PatternEventSet<>;
-using MyEuclidianPatternGenerator = Music::EuclidianPatternGenerator<>;
-using MySimpleRandomPatternGenerator = Music::SimpleRandomPatternGenerator<>;
-using MyStyleANoteGenerator = Music::StyleANoteGenerator<>;
+using MyTuningReference = music::TuningReference;
+using MyWeightMap = music::WeightMap<music::HEPATONIC>;
+using MyChordEvent = music::ChordEvent<>;
+using MyChordEventSet = music::ChordEventSet<>;
+using MyNoteEventSet = music::NoteEventSet<>;
+using MyPatternEventSet = music::PatternEventSet<>;
+using MyEuclidianPatternGenerator = music::EuclidianPatternGenerator<>;
+using MySimpleRandomPatternGenerator = music::SimpleRandomPatternGenerator<>;
+using MyStyleANoteGenerator = music::StyleANoteGenerator<>;
 
 #if false
 constexpr int BASS_REGISTER = -3;

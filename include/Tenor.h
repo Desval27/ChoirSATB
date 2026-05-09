@@ -30,7 +30,7 @@ public:
                0.2,
                0.4,
                0.2,
-               Music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY)
+               music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY)
   {
   }
 
@@ -40,8 +40,8 @@ public:
   {
     // First start with our "hit" pattern
     MyPatternEventSet pattern;
-    const Music::NoteValue g = Music::NoteValue::Quarter;
-    Music::EuclidianPatternGenerator<>::GeneratePattern(
+    const music::NoteValue g = music::NoteValue::Quarter;
+    music::EuclidianPatternGenerator<>::GeneratePattern(
       setup_.timeSignature,
       setup_.bars,
       randomRange(0.6, 0.9), // density
@@ -53,11 +53,11 @@ public:
       if (pattern[i]) // Hit
       {
         int periodOffset = 0;
-        Music::Note n =
+        music::Note n =
           GetWeightedNote(randomRange(0.0f, 0.999999f), periodOffset);
         events_.Emplace(n, periodOffset, g);
       } else {
-        events_.Emplace(Music::REST, 0, g);
+        events_.Emplace(music::REST, 0, g);
       }
     }
     return events_.Count();

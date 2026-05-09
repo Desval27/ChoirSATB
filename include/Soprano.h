@@ -30,7 +30,7 @@ public:
                0.3,
                0.6,
                0.3,
-               Music::SCALE_WEIGHTS_7_UNIFORM)
+               music::SCALE_WEIGHTS_7_UNIFORM)
   {
   }
 
@@ -47,7 +47,7 @@ public:
   virtual float Process()
   {
     // Add vibrato to longer notes
-    if (GetCurrentNote().value > Music::NoteValue::Eighth) {
+    if (GetCurrentNote().value > music::NoteValue::Eighth) {
       const float vib_depth = 0.0293f; // ~50 cents pitch multipler
 
       float vib_val = vib.Process();
@@ -62,7 +62,7 @@ public:
   virtual size_t MakeEvents(MyChordEventSet& chords) override
   {
     MyPatternEventSet pattern;
-    const Music::NoteValue g = Music::NoteValue::Eighth;
+    const music::NoteValue g = music::NoteValue::Eighth;
     const float density = randomRange(0.4f, 0.9f);
     MyEuclidianPatternGenerator::GeneratePattern(
       setup_.timeSignature, setup_.bars, density, g, pattern);

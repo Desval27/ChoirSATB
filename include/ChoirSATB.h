@@ -12,17 +12,18 @@
 #pragma once
 
 #include <BasicApp.h>
-#include <Music/EventSetManager.h>
-#include <Music/MusicConfig.h>
-#include <Singleton.h>
 #include <SynthVoice.h>
+
+#include <music/event_set_manager.hpp>
+#include <music/music_config.hpp>
+#include <singleton.hpp>
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
 template<std::size_t VOICE_COUNT = 4,
-         std::size_t MAX_DEGREES = Music::DEF_MAX_DEGREES,
-         std::size_t SCALE_DEGREES = Music::DEF_SCALE_DEGREES,
-         std::size_t MAX_EVENTS = Music::DEF_MAX_EVENTS>
+         std::size_t MAX_DEGREES = music::DEF_MAX_DEGREES,
+         std::size_t SCALE_DEGREES = music::DEF_SCALE_DEGREES,
+         std::size_t MAX_EVENTS = music::DEF_MAX_EVENTS>
 class ChoirSATB
   : public BasicApp<MAX_DEGREES, SCALE_DEGREES>
   , public Singleton<
@@ -32,10 +33,10 @@ class ChoirSATB
   using SingletonApp =
     Singleton<ChoirSATB<VOICE_COUNT, MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>>;
   using EventSetManager =
-    Music::EventSetManager<MAX_DEGREES,
+    music::EventSetManager<MAX_DEGREES,
                            SCALE_DEGREES,
                            MAX_EVENTS,
-                           Music::NoteEventSet<MAX_EVENTS>>;
+                           music::NoteEventSet<MAX_EVENTS>>;
 
   struct SystemConfig
   {
@@ -58,14 +59,14 @@ class ChoirSATB
   struct VoiceRole
   {
     const MString<6> Name;
-    const Music::Period period;
+    const music::Period period;
     const Range<float> density;
-    const Music::NoteValue granularity;
+    const music::NoteValue granularity;
 
     VoiceRole(const char* name,
-              Music::Period period,
+              music::Period period,
               Range<float> density,
-              Music::NoteValue granularity)
+              music::NoteValue granularity)
       : Name(name)
       , period(period)
       , density(density)
@@ -75,38 +76,38 @@ class ChoirSATB
   };
 
   using Persona =
-    Music::Persona<VoiceRole, MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>;
+    music::Persona<VoiceRole, MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>;
 
   /*
     VoiceRole tenorRoleA("Tenor A",
                          3,
                          Range<float>(0.3F, 0.5F),
-                         Music::NoteValue::Quarter);
+                         music::NoteValue::Quarter);
     VoiceRole altoRoleA("Alto A",
                         4,
                         Range<float>(0.5F, 0.7F),
-                        Music::NoteValue::Eighth);
+                        music::NoteValue::Eighth);
     VoiceRole sopranoRoleA("Soprano A",
                            5,
                            Range<float>(0.6F, 0.9F),
-                           Music::NoteValue::Sixteenth);
+                           music::NoteValue::Sixteenth);
                            */
 
 private:
   ChoirSATB()
     : BaseApp()
-    , roles(MakeRoles())
-    , personas(MakePersonas())
+    , roles(make_roles())
+    , personas(make_personas())
   /*
-  , bassRoleA("Bass A", 2, Range<float>(0.3F, 0.7F), Music::NoteValue::Half)
+  , bassRoleA("Bass A", 2, Range<float>(0.3F, 0.7F), music::NoteValue::Half)
   , tenorRoleA(
-      "Tenor A", 3, Range<float>(0.3F, 0.5F), Music::NoteValue::Quarter)
+      "Tenor A", 3, Range<float>(0.3F, 0.5F), music::NoteValue::Quarter)
   , altoRoleA(
-      "Alto A", 4, Range<float>(0.5F, 0.7F), Music::NoteValue::Eighth)
+      "Alto A", 4, Range<float>(0.5F, 0.7F), music::NoteValue::Eighth)
   , sopranoRoleA("Soprano A",
                  5,
                  Range<float>(0.6F, 0.9F),
-                 Music::NoteValue::Sixteenth)
+                 music::NoteValue::Sixteenth)
                  */
   {
   }
@@ -116,43 +117,43 @@ private:
 public:
   std::array<SynthVoice, VOICE_COUNT> voices;
 
-  void Init(float sample_rate) override
+  void init(float sample_rate) override
   {
-    BaseApp::Init(sample_rate);
+    BaseApp::init(sample_rate);
 
     // Voices
     for (auto& v : voices) {
-      v.Init(sample_rate);
-      v.Update(0UL); // Initial state
+      v.init(sample_rate);
+      v.update(0UL); // Initial state
     }
 
-    voices[0].SetFreq(55.0F);
-    voices[1].SetFreq(110.0F);
-    voices[2].SetFreq(220.0F);
-    voices[3].SetFreq(440.0F);
+    voices[0].set_freq(55.0F);
+    voices[1].set_freq(110.0F);
+    voices[2].set_freq(220.0F);
+    voices[3].set_freq(440.0F);
 
     // Managers
     for (std::size_t i = 0; i < managers.size(); i++) {
-      managers[i].SetPersona(personas[i]);
+      managers[i].set_persona(personas[i]);
     }
   }
 
-  std::tuple<float, float> Process(bool trigger = false) override
+  std::tuple<float, float> process(bool trigger = false) override
   {
     const float evenMix = 1.0 / VOICE_COUNT;
     float mixL = 0.0f;
     float mixR = 0.0f;
     for (SynthVoice& v : voices) {
-      auto [sigL, sigR] = v.Process();
+      auto [sigL, sigR] = v.process();
       mixL = mixL + (sigL * v.config_.volume * evenMix);
       mixR = mixR + (sigR * v.config_.volume * evenMix);
     }
     return { mixL, mixR };
   }
 
-  int HandlePulse()
+  int handle_pulse()
   {
-    int pulse = BaseApp::gnome.DoPulse();
+    int pulse = BaseApp::gnome.do_pulse();
     // if (pulse == 0) {
     //   // Just playing with it for now
     //   if (iterations_ == 4) {
@@ -165,7 +166,7 @@ public:
     // }
 
     for (auto& m : managers) {
-      m.HandlePulse(pulse);
+      m.handle_pulse(pulse);
     }
 
     // // This won't always work and needs to be improved.
@@ -191,10 +192,10 @@ public:
   void set_running(bool value) { running_ = value; }
 
 protected:
-  void InternalUpdate(uint32_t nowMS) override
+  void internal_update(uint32_t nowMS) override
   {
     for (SynthVoice& v : voices) {
-      v.Update(nowMS);
+      v.update(nowMS);
     }
   }
 
@@ -206,34 +207,34 @@ private:
   std::array<Persona, VOICE_COUNT> personas;
   std::array<EventSetManager, VOICE_COUNT> managers;
 
-  static std::array<VoiceRole, VOICE_COUNT> MakeRoles()
+  static std::array<VoiceRole, VOICE_COUNT> make_roles()
   {
     if constexpr (VOICE_COUNT == 1) {
       return { {
         VoiceRole{
-          "Bass A", 2, Range<float>(0.3F, 0.7F), Music::NoteValue::Half },
+          "Bass A", 2, Range<float>(0.3F, 0.7F), music::NoteValue::Half },
       } };
     } else if constexpr (VOICE_COUNT == 2) {
       return { {
         VoiceRole{
-          "Bass A", 2, Range<float>(0.3F, 0.7F), Music::NoteValue::Half },
+          "Bass A", 2, Range<float>(0.3F, 0.7F), music::NoteValue::Half },
         VoiceRole{ "Soprano A",
                    5,
                    Range<float>(0.6F, 0.9F),
-                   Music::NoteValue::Sixteenth },
+                   music::NoteValue::Sixteenth },
       } };
     } else if constexpr (VOICE_COUNT == 4) {
       return { {
         VoiceRole{
-          "Bass A", 2, Range<float>(0.3F, 0.7F), Music::NoteValue::Half },
+          "Bass A", 2, Range<float>(0.3F, 0.7F), music::NoteValue::Half },
         VoiceRole{
-          "Tenor A", 3, Range<float>(0.3F, 0.5F), Music::NoteValue::Quarter },
+          "Tenor A", 3, Range<float>(0.3F, 0.5F), music::NoteValue::Quarter },
         VoiceRole{
-          "Alto A", 4, Range<float>(0.5F, 0.7F), Music::NoteValue::Eighth },
+          "Alto A", 4, Range<float>(0.5F, 0.7F), music::NoteValue::Eighth },
         VoiceRole{ "Soprano A",
                    5,
                    Range<float>(0.6F, 0.9F),
-                   Music::NoteValue::Sixteenth },
+                   music::NoteValue::Sixteenth },
       } };
     } else {
       static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 4,
@@ -241,7 +242,7 @@ private:
     }
   }
 
-  std::array<Persona, VOICE_COUNT> MakePersonas()
+  std::array<Persona, VOICE_COUNT> make_personas()
   {
     if constexpr (VOICE_COUNT == 1) {
       return { {
@@ -307,7 +308,7 @@ private:
       SystemConfig          config_;
       MySetup               setup_;
       const MyTuningReference tuningRef_;
-      Music::Gnome          gnome_;
+      music::Gnome          gnome_;
       MyChordEventSet       chords_;
 
       MString<20>           chordText_;
