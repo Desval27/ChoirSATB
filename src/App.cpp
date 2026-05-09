@@ -9,6 +9,7 @@
  * and related or neighboring rights to this software.
  * See <http://creativecommons.org>
  */
+#if false
 #include <App.h>
 
 using namespace Music;
@@ -160,3 +161,4 @@ TheApp::DoPulse()
 
   return pulse;
 }
+#endif

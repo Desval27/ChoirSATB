@@ -1,0 +1,58 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"editor.formatOnSave": true,
+		"C_Cpp.default.cppStandard": "gnu++17",
+		"C_Cpp.default.cStandard": "gnu17",
+		"C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+		"C_Cpp.default.defines": [
+			"DEBUG"
+		],
+		"C_Cpp.default.includePath": [
+			"${workspaceFolder}/../../DaisySP/Source/**",
+			"${workspaceFolder}/../../libDaisy/src/**",
+			"${workspaceFolder}/../include/**",
+			"${workspaceFolder}/include/**"
+		],
+		"C_Cpp.clang_format_style": "file",
+		"C_Cpp.clang_format_sortIncludes": true,
+		"C_Cpp.codeAnalysis.clangTidy.enabled": true,
+		"C_Cpp.clang_format_fallbackStyle": "Mozilla"
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+        {
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32h7x.cfg"
+            ],
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "debuggerArgs": [
+                "-d",
+                "${workspaceRoot}"
+            ],
+            "device": "STM32H755IB6",
+            "executable": "./build/ChoirSATB.elf",
+            "interface": "swd",
+            "preRestartCommands": [
+                "load",
+                "enable breakpoint",
+                "monitor reset"
+            ],
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            // "servertype": "jlink",
+            "servertype": "openocd",
+            "showDevDebugOutput": "raw",
+            "svdFile": "${workspaceRoot}/../.vscode/STM32H750x.svd",
+        }
+ 		]
+	}
+}

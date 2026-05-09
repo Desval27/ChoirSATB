@@ -18,23 +18,34 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief
-class TheSoprano : public TheVoice {
+class TheSoprano : public TheVoice
+{
 public:
-  TheSoprano(const MySetup &setup, const MyTuningReference &tr)
-      // 0 Relative to C4 = C4
-      : TheVoice(setup, tr, SOPRANO_REGISTER, 0.1, 0.3, 0.6, 0.3,
-                 Music::SCALE_WEIGHTS_7_UNIFORM) {}
+  TheSoprano(const MySetup& setup, const MyTuningReference& tr)
+    // 0 Relative to C4 = C4
+    : TheVoice(setup,
+               tr,
+               SOPRANO_REGISTER,
+               0.1,
+               0.3,
+               0.6,
+               0.3,
+               Music::SCALE_WEIGHTS_7_UNIFORM)
+  {
+  }
 
-  virtual const char *GetName() const override { return s_SOPRANO; }
+  virtual const char* GetName() const override { return s_SOPRANO; }
 
-  virtual void Init(float sample_rate) override {
+  virtual void Init(float sample_rate) override
+  {
     TheVoice::Init(sample_rate);
     vib.Init(sample_rate);
     vib.SetWaveform(daisysp::Oscillator::WAVE_SIN);
     vib.SetFreq(5.5f); // Typical?
   }
 
-  virtual float Process() {
+  virtual float Process()
+  {
     // Add vibrato to longer notes
     if (GetCurrentNote().value > Music::NoteValue::Eighth) {
       const float vib_depth = 0.0293f; // ~50 cents pitch multipler
@@ -48,12 +59,15 @@ public:
     return TheVoice::Process();
   }
 
-  virtual size_t MakeEvents(MyChordEventSet &chords) override {
+  virtual size_t MakeEvents(MyChordEventSet& chords) override
+  {
     MyPatternEventSet pattern;
     const Music::NoteValue g = Music::NoteValue::Eighth;
     const float density = randomRange(0.4f, 0.9f);
-    MyEuclidianPatternGenerator::GeneratePattern(setup_.timeSignature, setup_.bars, density, g, pattern);
-    return MyStyleANoteGenerator::GenerateEvents(setup_, pattern, chords, g, weights_, events_);
+    MyEuclidianPatternGenerator::GeneratePattern(
+      setup_.timeSignature, setup_.bars, density, g, pattern);
+    return MyStyleANoteGenerator::GenerateEvents(
+      setup_, pattern, chords, g, weights_, events_);
   }
 
 private:

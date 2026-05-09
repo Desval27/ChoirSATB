@@ -18,343 +18,345 @@
 
 #include "Types.h"
 
-static const char *s_BASS = "BASS";
-static const char *s_TENOR = "TENOR";
-static const char *s_ALTO = "ALTO";
-static const char *s_SOPRANO = "SOPRANO";
+static const char* s_BASS = "BASS";
+static const char* s_TENOR = "TENOR";
+static const char* s_ALTO = "ALTO";
+static const char* s_SOPRANO = "SOPRANO";
 
-static const char *s_SIN = "SIN";
-static const char *s_TRIANGLE = "TRIANGLE";
-static const char *s_SAW = "SAW";
-static const char *s_RAMP = "RAMP";
-static const char *s_SQUARE = "SQUARE";
-static const char *s_POLY_TRIANGLE = "POLY TRIANGLE";
-static const char *s_POLY_SAW = "POLY SAW";
-static const char *s_POLY_SQUARE = "POLY SQUARE";
-static const char *s_UNKNOWN = "????";
+static const char* s_SIN = "SIN";
+static const char* s_TRIANGLE = "TRIANGLE";
+static const char* s_SAW = "SAW";
+static const char* s_RAMP = "RAMP";
+static const char* s_SQUARE = "SQUARE";
+static const char* s_POLY_TRIANGLE = "POLY TRIANGLE";
+static const char* s_POLY_SAW = "POLY SAW";
+static const char* s_POLY_SQUARE = "POLY SQUARE";
+static const char* s_UNKNOWN = "????";
 
 class TheVoice
 {
 public:
-    TheVoice(const MySetup &setup_,
-             const MyTuningReference &tr,
-             int periodOffset,
-             float attack,
-             float decay,
-             float sustain,
-             float release,
-             const MyWeightMap &weights_)
-        : setup_(setup_),
-          tuningReference_(tr),
-          weights_(weights_),
-          config_(periodOffset, daisysp::Oscillator::WAVE_TRI, attack, decay, sustain, release),
-          gate_(false),
-          currentNoteIndex_(-1)
-    {
-        events_.Clear();
+  TheVoice(const MySetup& setup_,
+           const MyTuningReference& tr,
+           int periodOffset,
+           float attack,
+           float decay,
+           float sustain,
+           float release,
+           const MyWeightMap& weights_)
+    : setup_(setup_)
+    , tuningReference_(tr)
+    , weights_(weights_)
+    , config_(periodOffset,
+              daisysp::Oscillator::WAVE_TRI,
+              attack,
+              decay,
+              sustain,
+              release)
+    , gate_(false)
+    , currentNoteIndex_(-1)
+  {
+    events_.Clear();
 
-        const float rootC4Hz = setup_.temperament.FrequencyFromReference(Music::TemperedPitch(0, 0), tuningReference_);
-        const float voiceRootHz = rootC4Hz * setup_.temperament.PeriodMultiplier(config_.periodOffset);
+    const float rootC4Hz = setup_.temperament.FrequencyFromReference(
+      Music::TemperedPitch(0, 0), tuningReference_);
+    const float voiceRootHz =
+      rootC4Hz * setup_.temperament.PeriodMultiplier(config_.periodOffset);
 
-        pitchEngine_.SetTemperament(&setup_.temperament);
-        pitchEngine_.SetScaleMap(&setup_.scaleMap);
-        pitchEngine_.SetRootHz(voiceRootHz);
+    pitchEngine_.SetTemperament(&setup_.temperament);
+    pitchEngine_.SetScaleMap(&setup_.scaleMap);
+    pitchEngine_.SetRootHz(voiceRootHz);
 
-        noteBuf_.clear();
+    noteBuf_.clear();
+  }
+
+  virtual void Init(float sample_rate)
+  {
+    // Set envelope parameters
+    osc_.Init(sample_rate);
+    flt_.Init(sample_rate);
+    ampEnv_.Init(sample_rate);
+  }
+
+  virtual float Process()
+  {
+    osc_.SetWaveform(config_.waveform.Get());
+    float env_out = ampEnv_.Process(gate_);
+    if (!std::isfinite(env_out))
+      env_out = 0.0f;
+    osc_.SetAmp(env_out);
+    const float sig = osc_.Process();
+    return std::isfinite(sig) ? sig : 0.0f;
+  }
+
+  virtual void Update()
+  {
+    if (currentNoteIndex_ < 0 ||
+        currentNoteIndex_ >= static_cast<int>(events_.Count())) {
+      noteBuf_.clear();
+      return;
     }
 
-    virtual void Init(float sample_rate)
-    {
-        // Set envelope parameters
-        osc_.Init(sample_rate);
-        flt_.Init(sample_rate);
-        ampEnv_.Init(sample_rate);
+    // Update our text here outside of the main audio event handler
+    if (events_[currentNoteIndex_].note == Music::REST) {
+      noteBuf_.clear();
+    } else {
+      char noteName[6];
+      setup_.temperament.GetNoteLabel(
+        events_[currentNoteIndex_].note, noteName, sizeof(noteName));
+      noteBuf_.printf("%s-%d",
+                      noteName,
+                      4 + config_.periodOffset +
+                        events_[currentNoteIndex_].period);
+    }
+  }
+
+  const char* GetNoteText() const { return noteBuf_.c_str(); }
+
+  virtual const char* GetName() const = 0;
+
+  const char* GetWaveformName() const
+  {
+    switch (GetWaveform()) {
+      case daisysp::Oscillator::WAVE_SIN:
+        return s_SIN;
+      case daisysp::Oscillator::WAVE_TRI:
+        return s_TRIANGLE;
+      case daisysp::Oscillator::WAVE_SAW:
+        return s_SAW;
+      case daisysp::Oscillator::WAVE_RAMP:
+        return s_RAMP;
+      case daisysp::Oscillator::WAVE_SQUARE:
+        return s_SQUARE;
+      case daisysp::Oscillator::WAVE_POLYBLEP_TRI:
+        return s_POLY_TRIANGLE;
+      case daisysp::Oscillator::WAVE_POLYBLEP_SAW:
+        return s_POLY_SAW;
+      case daisysp::Oscillator::WAVE_POLYBLEP_SQUARE:
+        return s_POLY_SQUARE;
+      default:
+        return s_UNKNOWN;
+    }
+  }
+
+  void DoPulse(int pulse)
+  {
+    currentNoteIndex_ = events_.GetEventIndexForPulse(pulse);
+    if (currentNoteIndex_ < 0 ||
+        currentNoteIndex_ >= static_cast<int>(events_.Count())) {
+      gate_ = false;
+      return;
     }
 
-    virtual float Process()
-    {
-        osc_.SetWaveform(config_.waveform.Get());
-        float env_out = ampEnv_.Process(gate_);
-        if (!std::isfinite(env_out))
-            env_out = 0.0f;
-        osc_.SetAmp(env_out);
-        const float sig = osc_.Process();
-        return std::isfinite(sig) ? sig : 0.0f;
+    const Music::NoteEvent& currentEvent = events_[currentNoteIndex_];
+    if (IsEventRisingEdge(pulse))
+      gate_ = (currentEvent.note != Music::REST);
+    else if (IsEventFallingEdge(pulse))
+      gate_ = false;
+
+    ampEnv_.SetAttackTime(config_.ampAdsr.attack);
+    ampEnv_.SetDecayTime(config_.ampAdsr.decay);
+    ampEnv_.SetSustainLevel(config_.ampAdsr.sustain);
+    ampEnv_.SetReleaseTime(config_.ampAdsr.release);
+
+    if (currentEvent.note != Music::REST) {
+      HandleNoteEvent(pulse, currentEvent);
     }
+  }
 
-    virtual void Update()
-    {
-        if (currentNoteIndex_ < 0 || currentNoteIndex_ >= static_cast<int>(events_.Count()))
-        {
-            noteBuf_.clear();
-            return;
-        }
+  bool GetGate() const { return gate_; }
 
-        // Update our text here outside of the main audio event handler
-        if (events_[currentNoteIndex_].note == Music::REST)
-        {
-            noteBuf_.clear();
-        }
-        else
-        {
-            char noteName[6];
-            setup_.temperament.GetNoteLabel(events_[currentNoteIndex_].note, noteName, sizeof(noteName));
-            noteBuf_.printf("%s-%d", noteName, 4 + config_.periodOffset + events_[currentNoteIndex_].period);
-        }
-    }
+  int8_t GetWaveform() const { return config_.waveform.Get(); }
+  virtual void SetWaveform(const int8_t value)
+  {
+    config_.waveform.Set(value);
+    osc_.SetWaveform(config_.waveform.Get());
+  }
 
-    const char *GetNoteText() const { return noteBuf_.c_str(); }
+  float GetVolume() const { return config_.volume.Get(); }
+  float GetVolumeAs0to1() const { return config_.volume.GetAs0to1(); }
+  void SetVolume(float value) { config_.volume.Set(value); }
+  void SetVolumeAs0to1(float value) { config_.volume.SetFrom0to1(value); }
+  void AppendVolumeToString(daisy::FixedCapStrBase<char>& string) const
+  {
+    config_.volume.AppentToString(string);
+  }
 
-    virtual const char *GetName() const = 0;
+  // void SetWeights(const MyWeightMap &weights_)
+  // {
+  //     _weights = weights_;
+  // }
 
-    const char *GetWaveformName() const
-    {
-        switch (GetWaveform())
-        {
-        case daisysp::Oscillator::WAVE_SIN:
-            return s_SIN;
-        case daisysp::Oscillator::WAVE_TRI:
-            return s_TRIANGLE;
-        case daisysp::Oscillator::WAVE_SAW:
-            return s_SAW;
-        case daisysp::Oscillator::WAVE_RAMP:
-            return s_RAMP;
-        case daisysp::Oscillator::WAVE_SQUARE:
-            return s_SQUARE;
-        case daisysp::Oscillator::WAVE_POLYBLEP_TRI:
-            return s_POLY_TRIANGLE;
-        case daisysp::Oscillator::WAVE_POLYBLEP_SAW:
-            return s_POLY_SAW;
-        case daisysp::Oscillator::WAVE_POLYBLEP_SQUARE:
-            return s_POLY_SQUARE;
-        default:
-            return s_UNKNOWN;
-        }
-    }
+  float GetAttack() const { return config_.ampAdsr.attack.Get(); }
+  float GetAttackAs0to1() const { return config_.ampAdsr.attack.GetAs0to1(); }
+  void SetAttack(float value) { config_.ampAdsr.attack.Set(value); }
+  void SetAttackAs0to1(float value)
+  {
+    config_.ampAdsr.attack.SetFrom0to1(value);
+  }
+  float GetDecay() const { return config_.ampAdsr.decay.Get(); }
+  float GetDecayAs0to1() const { return config_.ampAdsr.decay.GetAs0to1(); }
+  void SetDecay(float value) { config_.ampAdsr.decay.Set(value); }
+  void SetDecayAs0to1(float value) { config_.ampAdsr.decay.SetFrom0to1(value); }
+  float GetSustain() const { return config_.ampAdsr.sustain.Get(); }
+  float GetSustainAs0to1() const { return config_.ampAdsr.sustain.GetAs0to1(); }
+  void SetSustain(float value) { config_.ampAdsr.sustain.Set(value); }
+  void SetSustainAs0to1(float value)
+  {
+    config_.ampAdsr.sustain.SetFrom0to1(value);
+  }
+  float GetReleaseAs0to1() const { return config_.ampAdsr.release.GetAs0to1(); }
+  void SetRelease(float value) { config_.ampAdsr.release.Set(value); }
+  void SetReleaseAs0to1(float value)
+  {
+    config_.ampAdsr.release.SetFrom0to1(value);
+  }
 
-    void DoPulse(int pulse)
-    {
-        currentNoteIndex_ = events_.GetEventIndexForPulse(pulse);
-        if (currentNoteIndex_ < 0 || currentNoteIndex_ >= static_cast<int>(events_.Count()))
-        {
-            gate_ = false;
-            return;
-        }
-
-        const Music::NoteEvent &currentEvent = events_[currentNoteIndex_];
-        if (IsEventRisingEdge(pulse))
-            gate_ = (currentEvent.note != Music::REST);
-        else if (IsEventFallingEdge(pulse))
-            gate_ = false;
-
-        ampEnv_.SetAttackTime(config_.ampAdsr.attack);
-        ampEnv_.SetDecayTime(config_.ampAdsr.decay);
-        ampEnv_.SetSustainLevel(config_.ampAdsr.sustain);
-        ampEnv_.SetReleaseTime(config_.ampAdsr.release);
-
-        if (currentEvent.note != Music::REST)
-        {
-            HandleNoteEvent(pulse, currentEvent);
-        }
-    }
-
-    bool GetGate() const { return gate_; }
-
-    int8_t GetWaveform() const { return config_.waveform.Get(); }
-    virtual void SetWaveform(const int8_t value)
-    {
-        config_.waveform.Set(value);
-        osc_.SetWaveform(config_.waveform.Get());
-    }
-
-    float GetVolume() const { return config_.volume.Get(); }
-    float GetVolumeAs0to1() const { return config_.volume.GetAs0to1(); }
-    void SetVolume(float value) { config_.volume.Set(value); }
-    void SetVolumeAs0to1(float value) { config_.volume.SetFrom0to1(value); }
-    void AppendVolumeToString(daisy::FixedCapStrBase<char> &string) const
-    {
-        config_.volume.AppentToString(string);
-    }
-
-    // void SetWeights(const MyWeightMap &weights_)
-    // {
-    //     _weights = weights_;
-    // }
-
-    float GetAttack() const { return config_.ampAdsr.attack.Get(); }
-    float GetAttackAs0to1() const { return config_.ampAdsr.attack.GetAs0to1(); }
-    void SetAttack(float value) { config_.ampAdsr.attack.Set(value); }
-    void SetAttackAs0to1(float value)
-    {
-        config_.ampAdsr.attack.SetFrom0to1(value);
-    }
-    float GetDecay() const { return config_.ampAdsr.decay.Get(); }
-    float GetDecayAs0to1() const { return config_.ampAdsr.decay.GetAs0to1(); }
-    void SetDecay(float value) { config_.ampAdsr.decay.Set(value); }
-    void SetDecayAs0to1(float value)
-    {
-        config_.ampAdsr.decay.SetFrom0to1(value);
-    }
-    float GetSustain() const { return config_.ampAdsr.sustain.Get(); }
-    float GetSustainAs0to1() const
-    {
-        return config_.ampAdsr.sustain.GetAs0to1();
-    }
-    void SetSustain(float value) { config_.ampAdsr.sustain.Set(value); }
-    void SetSustainAs0to1(float value)
-    {
-        config_.ampAdsr.sustain.SetFrom0to1(value);
-    }
-    float GetReleaseAs0to1() const
-    {
-        return config_.ampAdsr.release.GetAs0to1();
-    }
-    void SetRelease(float value) { config_.ampAdsr.release.Set(value); }
-    void SetReleaseAs0to1(float value)
-    {
-        config_.ampAdsr.release.SetFrom0to1(value);
-    }
-
-    virtual size_t MakeEvents(MyChordEventSet &chords)
-    {
-        events_.Clear();
-        return events_.Count();
-    }
+  virtual size_t MakeEvents(MyChordEventSet& chords)
+  {
+    events_.Clear();
+    return events_.Count();
+  }
 
 protected:
-    const MySetup &setup_;
-    const MyTuningReference &tuningReference_;
-    const MyWeightMap &weights_;
+  const MySetup& setup_;
+  const MyTuningReference& tuningReference_;
+  const MyWeightMap& weights_;
 
-    VoiceConfig config_;
-    MyPitchEngine pitchEngine_;
+  VoiceConfig config_;
+  MyPitchEngine pitchEngine_;
 
-    Music::NoteEvent emptyNote_;
-    MyNoteEventSet events_;
+  Music::NoteEvent emptyNote_;
+  MyNoteEventSet events_;
 
-    daisysp::Oscillator osc_;
-    daisysp::MoogLadder flt_;
-    daisysp::Adsr ampEnv_;
+  daisysp::Oscillator osc_;
+  daisysp::MoogLadder flt_;
+  daisysp::Adsr ampEnv_;
 
-    float GetBaseFrequency() const { return baseFrequency_; }
+  float GetBaseFrequency() const { return baseFrequency_; }
 
-    const Music::NoteEvent &GetCurrentNote() const
-    {
-        return events_[currentNoteIndex_];
+  const Music::NoteEvent& GetCurrentNote() const
+  {
+    return events_[currentNoteIndex_];
+  }
+
+  virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne)
+  {
+    SetBaseFrequency(GetFreqForNote(ne.note, ne.period));
+  }
+
+  Music::Note GetWeightedNote(float unitRandom, int& outPeriodOffset)
+  {
+    return setup_.scaleMap.GetWeightedNote(
+      unitRandom, outPeriodOffset, weights_);
+  }
+
+  float GetFreqForNote(Music::Note n, Music::Period p, float fc = 0.0f) const
+  {
+    return pitchEngine_.Frequency(Music::TemperedPitch(n, p, fc));
+  }
+
+  Music::Degree GetMappedDegreeFromRoot(Music::Degree root,
+                                        int index,
+                                        int& outPeriodOffset) const
+  {
+    int rootIdx = setup_.scaleMap.GetIndexOfDegree(root);
+    return setup_.scaleMap.GetMappedDegree(rootIdx + index, outPeriodOffset);
+  }
+
+  bool IsEventRisingEdge(int pulse) const
+  {
+    return GetEventPulseOffset(pulse) == 0;
+  }
+
+  bool IsEventFallingEdge(
+    int pulse,
+    Music::Articulation articulation = Music::Articulation::Normal) const
+  {
+    if (events_.Count() == 0 || pulse < 0)
+      return false;
+
+    const int totalPulses = events_.GetTotalEventPulses();
+    if (totalPulses <= 0)
+      return false;
+
+    int previousPulse = pulse - 1;
+    if (pulse == 0) {
+      if (totalPulses > 0)
+        previousPulse = totalPulses - 1;
     }
 
-    virtual void HandleNoteEvent(int pulse, Music::NoteEvent ne)
-    {
-        SetBaseFrequency(GetFreqForNote(ne.note, ne.period));
-    }
+    const Music::NoteEvent& currentEvent = events_.GetEventForPulse(pulse);
+    const Music::NoteEvent& previousEvent =
+      events_.GetEventForPulse(previousPulse);
 
-    Music::Note GetWeightedNote(float unitRandom, int &outPeriodOffset)
-    {
-        return setup_.scaleMap.GetWeightedNote(unitRandom, outPeriodOffset, weights_);
-    }
+    // Always release when the sequence transitions from note to rest.
+    if (previousEvent.note != Music::REST && currentEvent.note == Music::REST)
+      return true;
 
-    float GetFreqForNote(Music::Note n, Music::Period p, float fc = 0.0f) const
-    {
-        return pitchEngine_.Frequency(Music::TemperedPitch(n, p, fc));
-    }
+    // Legato keeps the gate high between adjacent note events_.
+    if (articulation == Music::Articulation::Legato ||
+        currentEvent.note == Music::REST)
+      return false;
 
-    Music::Degree GetMappedDegreeFromRoot(Music::Degree root,
-                                          int index,
-                                          int &outPeriodOffset) const
-    {
-        int rootIdx = setup_.scaleMap.GetIndexOfDegree(root);
-        return setup_.scaleMap.GetMappedDegree(rootIdx + index, outPeriodOffset);
-    }
+    const int eventIdx = events_.GetEventIndexForPulse(pulse);
+    if (eventIdx < 0 || eventIdx >= static_cast<int>(events_.Count()))
+      return false;
 
-    bool IsEventRisingEdge(int pulse) const
-    {
-        return GetEventPulseOffset(pulse) == 0;
-    }
+    const int eventPulseOffset = GetEventPulseOffset(pulse);
+    if (eventPulseOffset < 0)
+      return false;
 
-    bool IsEventFallingEdge(int pulse, Music::Articulation articulation = Music::Articulation::Normal) const
-    {
-        if (events_.Count() == 0 || pulse < 0)
-            return false;
+    const int span = static_cast<int>(events_[eventIdx].value);
+    if (span <= 1)
+      return true;
 
-        const int totalPulses = events_.GetTotalEventPulses();
-        if (totalPulses <= 0)
-            return false;
+    float gateFraction = 0.90f; // Normal articulation.
+    if (articulation == Music::Articulation::Staccato)
+      gateFraction = 0.55f;
 
-        int previousPulse = pulse - 1;
-        if (pulse == 0)
-        {
-            if (totalPulses > 0)
-                previousPulse = totalPulses - 1;
-        }
+    int releasePulseOffset = static_cast<int>(span * gateFraction);
+    if (releasePulseOffset < 0)
+      releasePulseOffset = 0;
+    if (releasePulseOffset > (span - 1))
+      releasePulseOffset = span - 1;
 
-        const Music::NoteEvent &currentEvent = events_.GetEventForPulse(pulse);
-        const Music::NoteEvent &previousEvent = events_.GetEventForPulse(previousPulse);
+    return eventPulseOffset == releasePulseOffset;
+  }
 
-        // Always release when the sequence transitions from note to rest.
-        if (previousEvent.note != Music::REST && currentEvent.note == Music::REST)
-            return true;
+  int GetEventPulseOffset(int pulse) const
+  {
+    if (events_.Count() == 0 || pulse < 0)
+      return -1;
 
-        // Legato keeps the gate high between adjacent note events_.
-        if (articulation == Music::Articulation::Legato || currentEvent.note == Music::REST)
-            return false;
+    const int totalPulses = events_.GetTotalEventPulses();
+    if (totalPulses <= 0)
+      return -1;
 
-        const int eventIdx = events_.GetEventIndexForPulse(pulse);
-        if (eventIdx < 0 || eventIdx >= static_cast<int>(events_.Count()))
-            return false;
+    const int eventIdx = events_.GetEventIndexForPulse(pulse);
+    if (eventIdx < 0 || eventIdx >= static_cast<int>(events_.Count()))
+      return -1;
 
-        const int eventPulseOffset = GetEventPulseOffset(pulse);
-        if (eventPulseOffset < 0)
-            return false;
+    const int eventStartPulse =
+      events_.GetEventStartPulse(static_cast<size_t>(eventIdx));
+    return ((pulse % totalPulses) - eventStartPulse + totalPulses) %
+           totalPulses;
+  }
 
-        const int span = static_cast<int>(events_[eventIdx].value);
-        if (span <= 1)
-            return true;
-
-        float gateFraction = 0.90f; // Normal articulation.
-        if (articulation == Music::Articulation::Staccato)
-            gateFraction = 0.55f;
-
-        int releasePulseOffset = static_cast<int>(span * gateFraction);
-        if (releasePulseOffset < 0)
-            releasePulseOffset = 0;
-        if (releasePulseOffset > (span - 1))
-            releasePulseOffset = span - 1;
-
-        return eventPulseOffset == releasePulseOffset;
-    }
-
-    int GetEventPulseOffset(int pulse) const
-    {
-        if (events_.Count() == 0 || pulse < 0)
-            return -1;
-
-        const int totalPulses = events_.GetTotalEventPulses();
-        if (totalPulses <= 0)
-            return -1;
-
-        const int eventIdx = events_.GetEventIndexForPulse(pulse);
-        if (eventIdx < 0 || eventIdx >= static_cast<int>(events_.Count()))
-            return -1;
-
-        const int eventStartPulse = events_.GetEventStartPulse(static_cast<size_t>(eventIdx));
-        return ((pulse % totalPulses) - eventStartPulse + totalPulses) % totalPulses;
-    }
-
-    // const MyTemperament &GetTemperament() const { return *_t; }
-    // const MyScaleMap &GetScaleMap() const { return *_s; }
+  // const MyTemperament &GetTemperament() const { return *_t; }
+  // const MyScaleMap &GetScaleMap() const { return *_s; }
 
 private:
-    float baseFrequency_;
-    bool gate_;
-    int currentNoteIndex_;
-    MString<16> noteBuf_;
+  float baseFrequency_;
+  bool gate_;
+  int currentNoteIndex_;
+  MString<16> noteBuf_;
 
-    void SetBaseFrequency(float value)
-    {
-        if (std::isfinite(value) && value > 0.0f)
-        {
-            baseFrequency_ = value;
-            osc_.SetFreq(baseFrequency_);
-        }
+  void SetBaseFrequency(float value)
+  {
+    if (std::isfinite(value) && value > 0.0f) {
+      baseFrequency_ = value;
+      osc_.SetFreq(baseFrequency_);
     }
+  }
 };
