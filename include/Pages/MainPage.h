@@ -109,12 +109,37 @@ protected:
     // const int line3Y = line2Y + Font_7x10.FontHeight;
     FixedCapStr<32> txt;
 
-    display.SetCursor(4, 0);
+    display.SetCursor(8, 0);
     display.WriteString("CHOIR SATB", Font_11x18, true);
-    display.SetCursor(0, 20);
+
+    txt.Clear();
+    for (std::size_t i = 0; i < theApp.VoiceCount(); i++) {
+      theApp.voice_volume_append(txt, i);
+      txt.Append(' ');
+    }
+    display.SetCursor(5, 20);
+    display.WriteString(txt.Cstr(), Font_6x8, true);
+
+    txt.Clear();
     theApp.bpm_append(txt);
-    txt.Append(theApp.get_running() ? " RUNNING" : " STOPPED");
+    txt.Append(' ');
+    theApp.timing_append(txt);
+    txt.Append(' ');
+    txt.Append(theApp.get_current_chord_text());
+    display.SetCursor(0, 30);
     display.WriteString(txt.Cstr(), Font_7x10, true);
+
+    display.SetCursor(0, 40);
+    display.WriteString(theApp.get_scale_name(), Font_7x10, true);
+
+    // TODO: combine with the other loop once established.
+    txt.Clear();
+    for (std::size_t i = 0; i < theApp.VoiceCount(); i++) {
+      txt.Append(theApp.get_current_voice_text(i));
+      txt.Append(' ');
+    }
+    display.SetCursor(0, 50);
+    display.WriteString(txt.Cstr(), Font_6x8, true);
 
     // const int voiceWidth = display.Width() / theApp.NUM_VOICES;
     // const int voiceLineY = line3Y + Font_7x10.FontHeight + 2;
