@@ -70,17 +70,20 @@ class ChoirSATB
     const MString<6> Name;
     const music::Period period;
     const Range<float> density;
+    const Range<float> repeat_probability;
     const music::NoteValue granularity;
     const music::WeightMap<SCALE_DEGREES>& weight_map;
 
     VoiceRole(const char* name,
               music::Period period,
               Range<float> density,
+              Range<float> repeat_probability,
               music::NoteValue granularity,
               const music::WeightMap<SCALE_DEGREES>& weight_map)
       : Name(name)
       , period(period)
       , density(density)
+      , repeat_probability(repeat_probability)
       , granularity(granularity)
       , weight_map(weight_map)
     {
@@ -354,6 +357,7 @@ private:
         VoiceRole{ "Bass A",
                    -2,
                    Range<float>(0.6F, 0.9F),
+                   Range<float>(0.0F, 0.0F),
                    music::NoteValue::Quarter,
                    music::SCALE_WEIGHTS_7_UNIFORM },
       } };
@@ -362,10 +366,12 @@ private:
         VoiceRole{ "Bass A",
                    -2,
                    Range<float>(0.6F, 0.9F),
+                   Range<float>(0.0F, 0.0F),
                    music::NoteValue::Quarter,
                    music::SCALE_WEIGHTS_7_UNIFORM },
         VoiceRole{ "Soprano A",
                    1,
+                   Range<float>(0.0F, 0.0F),
                    Range<float>(0.6F, 0.9F),
                    music::NoteValue::Sixteenth,
                    music::SCALE_WEIGHTS_7_UNIFORM },
@@ -375,16 +381,19 @@ private:
         VoiceRole{ "Bass A",
                    -2,
                    Range<float>(0.6F, 0.9F),
+                   Range<float>(0.0F, 0.0F),
                    music::NoteValue::Half,
                    music::SCALE_WEIGHTS_7_UNIFORM },
         VoiceRole{ "Alto A",
                    0,
+                   Range<float>(0.0F, 0.0F),
                    Range<float>(0.5F, 0.7F),
                    music::NoteValue::Eighth,
                    music::SCALE_WEIGHTS_7_UNIFORM },
         VoiceRole{ "Soprano A",
                    1,
                    Range<float>(0.6F, 0.9F),
+                   Range<float>(0.0F, 0.0F),
                    music::NoteValue::Sixteenth,
                    music::SCALE_WEIGHTS_7_UNIFORM },
       } };
@@ -393,21 +402,25 @@ private:
         VoiceRole{ "Bass A",
                    -2,
                    Range<float>(0.6F, 0.9F),
+                   Range<float>(0.0F, 0.0F),
                    music::NoteValue::Half,
                    music::SCALE_WEIGHTS_7_TONIC_HEAVY },
         VoiceRole{ "Tenor A",
                    -1,
                    Range<float>(0.3F, 0.7F),
+                   Range<float>(0.4F, 0.2F),
                    music::NoteValue::Quarter,
                    music::SCALE_WEIGHTS_7_TONIC_HEAVY },
         VoiceRole{ "Alto A",
                    0,
                    Range<float>(0.3F, 0.8F),
+                   Range<float>(0.0F, 0.0F),
                    music::NoteValue::Eighth,
                    music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY },
         VoiceRole{ "Soprano A",
                    1,
                    Range<float>(0.3F, 0.9F),
+                   Range<float>(0.1F, 0.4F),
                    music::NoteValue::Sixteenth,
                    music::SCALE_WEIGHTS_7_UNIFORM },
       } };
