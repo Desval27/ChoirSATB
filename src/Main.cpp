@@ -23,6 +23,7 @@
 #include <ChoirSATB.h>
 #include <Pages/MainPage.h>
 #include <Pages/MixerPage.h>
+#include <PersistedVoiceConfig.h>
 
 using namespace daisysp;
 using namespace daisy;
@@ -30,11 +31,13 @@ using namespace daisy;
 constexpr int ENCODER_COUNT = 1;
 constexpr int BUTTON_COUNT = 5;
 constexpr int POT_COUNT = 4;
+constexpr int VOICE_COUNT = 4;
+constexpr uint32_t SLOT_SPACING = 0x1000; // Overkill at 4k, but testing.
 
 ////////////////////////////////////////////////////////////////////////////////
 // Type Aliases & Simplification
 ////////////////////////////////////////////////////////////////////////////////
-using MyApp = ChoirSATB<4>;
+using MyApp = ChoirSATB<VOICE_COUNT>;
 using MyMainPage = MainPage<MyApp>;
 using MyOverlord = UIOverlord<SSD130xI2c128x64Driver,
                               ENCODER_COUNT,
@@ -76,6 +79,11 @@ FullScreenItemMenu mainMenu;
 MixerPage mixerPage;
 SynthVoicePage voicePage;
 
+TPersistentStorage storage_slots[VOICE_COUNT] = { { hw.qspi },
+                                                  { hw.qspi },
+                                                  { hw.qspi },
+                                                  { hw.qspi } };
+
 ///////////////////////////////////////////////////////////////////////////////
 // UI & Menu Structure
 ///////////////////////////////////////////////////////////////////////////////
@@ -95,6 +103,28 @@ open_synth_voice_page(void* rawContext)
   auto* context = static_cast<OpenSynthVoicePageContext*>(rawContext);
   context->page->Bind(*context->config);
   context->ui->OpenPage(*context->page);
+}
+
+void
+load_voice_config(void* rawContext)
+{
+  PersistedVoiceConfig defaults;
+  for (int i = 0; i < VOICE_COUNT; i++) {
+    uint32_t offset = i * SLOT_SPACING;
+    storage_slots[i].Init(defaults, offset);
+    PersistedVoiceConfig& loaded = storage_slots[i].GetSettings();
+    PersistedVoiceConfig::mapTo(loaded, theApp.voices[i].config_);
+  }
+}
+
+void
+save_voice_config(void* rawContext)
+{
+  for (int i = 0; i < VOICE_COUNT; i++) {
+    PersistedVoiceConfig& voice_config = storage_slots[i].GetSettings();
+    PersistedVoiceConfig::mapFrom(theApp.voices[i].config_, voice_config);
+    storage_slots[i].Save();
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -124,6 +154,12 @@ AbstractMenu::ItemConfig mainMenuItems[] = {
   { .type = AbstractMenu::ItemType::callbackFunctionItem,
     .text = "SOPRANO",
     .asCallbackFunctionItem{ open_synth_voice_page, &voicePageContexts[3] } },
+  { .type = AbstractMenu::ItemType::callbackFunctionItem,
+    .text = "LOAD",
+    .asCallbackFunctionItem{ load_voice_config, 0 } },
+  { .type = AbstractMenu::ItemType::callbackFunctionItem,
+    .text = "SAVE",
+    .asCallbackFunctionItem{ save_voice_config, 0 } },
   { .type = AbstractMenu::ItemType::closeMenuItem, .text = "CLOSE" },
 };
 

@@ -41,7 +41,7 @@ C_DEFS += -DDAISY_PLATFORM -DPLATFORM=$(PLATFORM) -Wno-unused-variable -Wno-unus
 OPT = -Os
 C_INCLUDES += -I$(APP_INC) -I$(MONKEY_INC) -I$(MONKEY_DAYSEYE_INC) 
 
-CPP_STANDARD ?= -std=gnu++17
+CPP_STANDARD ?= -std=c++20
 
 .PHONY: show_size garp
 

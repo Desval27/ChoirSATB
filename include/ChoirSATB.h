@@ -25,27 +25,34 @@ template<std::size_t VOICE_COUNT = 4,
          std::size_t MAX_DEGREES = music::DEF_MAX_DEGREES,
          std::size_t SCALE_DEGREES = music::DEF_SCALE_DEGREES,
          std::size_t MAX_EVENTS = music::DEF_MAX_EVENTS>
+  requires(SCALE_DEGREES == music::HEPATONIC) // For now
 class ChoirSATB
   : public BasicApp<MAX_DEGREES, SCALE_DEGREES>
   , public Singleton<
       ChoirSATB<VOICE_COUNT, MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>>
 {
-  using BaseApp = BasicApp<MAX_DEGREES, SCALE_DEGREES>;
-  using MySetup = music::Setup<MAX_DEGREES, SCALE_DEGREES>;
-  using SingletonApp =
+
+  using TBasicApp = BasicApp<MAX_DEGREES, SCALE_DEGREES>;
+  using TSetup = music::Setup<MAX_DEGREES, SCALE_DEGREES>;
+  using TSingletonApp =
     Singleton<ChoirSATB<VOICE_COUNT, MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>>;
-  using NoteEventSetManager =
+  using TNoteEventSetManager =
     music::EventSetManager<MAX_DEGREES,
                            SCALE_DEGREES,
                            MAX_EVENTS,
                            music::NoteEventSet<MAX_EVENTS>>;
-  using ChordEventSetManager = music::EventSetManager<
+  using TChordEventSetManager = music::EventSetManager<
     MAX_DEGREES,
     SCALE_DEGREES,
     MAX_EVENTS,
     music::ChordEventSet<MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>>;
 
-  using MySynthVoice = SynthVoice<MAX_DEGREES, SCALE_DEGREES>;
+  using TSynthVoice = SynthVoice<MAX_DEGREES, SCALE_DEGREES>;
+  using TPersonaRole = music::StockPersonaRole<SCALE_DEGREES>;
+  using TPersona =
+    music::Persona<TPersonaRole, MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>;
+  using TChordPersona =
+    music::Persona<TPersonaRole, MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>;
 
   struct SystemConfig
   {
@@ -65,67 +72,22 @@ class ChoirSATB
     }
   };
 
-  struct VoiceRole
-  {
-    const MString<6> Name;
-    const music::Period period;
-    const Range<float> density;
-    const Range<float> repeat_probability;
-    const music::NoteValue granularity;
-    const music::WeightMap<SCALE_DEGREES>& weight_map;
-
-    VoiceRole(const char* name,
-              music::Period period,
-              Range<float> density,
-              Range<float> repeat_probability,
-              music::NoteValue granularity,
-              const music::WeightMap<SCALE_DEGREES>& weight_map)
-      : Name(name)
-      , period(period)
-      , density(density)
-      , repeat_probability(repeat_probability)
-      , granularity(granularity)
-      , weight_map(weight_map)
-    {
-    }
-  };
-
-  struct ChordRole
-  {
-    const MString<6> Name;
-    const music::Period period;
-    const Range<float> density;
-    const music::NoteValue granularity;
-    ChordRole()
-      : Name("CHORDS")
-      , period(0)
-      , density(0.0F, 0.0F)
-      , granularity(music::NoteValue::Whole)
-    {
-    }
-  };
-
-  using Persona =
-    music::Persona<VoiceRole, MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>;
-  using ChordPersona =
-    music::Persona<ChordRole, MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>;
-
 private:
   ChoirSATB()
-    : BaseApp()
-    , chordRole_()
-    , chordPersona_("CHORDS", BaseApp::setup, chordRole_)
-    , chordManager_(BaseApp::setup)
+    : TBasicApp()
+    , chord_role_(music::NoteValue::Whole)
+    , chord_persona_("CHORDS", TBasicApp::setup, chord_role_)
+    , chord_manager_(TBasicApp::setup)
     , roles_(make_roles())
     , personas_(make_personas())
-    , managers_(make_managers(BaseApp::setup))
+    , managers_(make_managers(TBasicApp::setup))
   {
   }
 
-  friend SingletonApp;
+  friend TSingletonApp;
 
 public:
-  std::array<MySynthVoice, VOICE_COUNT> voices;
+  std::array<TSynthVoice, VOICE_COUNT> voices;
 
   /////////////////////////////////////////////////////////////////////////////
   /// @brief
@@ -137,16 +99,16 @@ public:
   /// @param sample_rate
   void init(float sample_rate) override
   {
-    BaseApp::init(sample_rate);
+    TBasicApp::init(sample_rate);
 
     // Voices
     for (std::size_t i = 0; i < voices.size(); i++) {
-      voices[i].init(BaseApp::setup, roles_[i].period, sample_rate);
+      voices[i].init(TBasicApp::setup, roles_[i].period_offset, sample_rate);
       voices[i].update(0UL); // Initial state
     }
 
     // Managers
-    chordManager_.set_persona(chordPersona_);
+    chord_manager_.set_persona(chord_persona_);
     for (std::size_t i = 0; i < managers_.size(); i++) {
       managers_[i].set_persona(personas_[i]);
     }
@@ -174,11 +136,11 @@ public:
   /// @return
   int handle_pulse()
   {
-    int pulse = BaseApp::gnome.do_pulse();
+    int pulse = TBasicApp::gnome.do_pulse();
     if (pulse == 0) {
       make_events();
     }
-    chordManager_.handle_pulse(pulse);
+    chord_manager_.handle_pulse(pulse);
 
     int i = 0;
     for (auto& m : managers_) {
@@ -224,13 +186,13 @@ public:
   /// @return
   const char* get_current_chord_text() const
   {
-    return chordManager_.get_text();
+    return chord_manager_.get_text();
   }
 
   /////////////////////////////////////////////////////////////////////////////
   /// @brief
   /// @return
-  const char* get_scale_name() const { return scaleName_.c_str(); }
+  const char* get_scale_name() const { return scale_name_.c_str(); }
 
   /////////////////////////////////////////////////////////////////////////////
   /// @brief
@@ -263,10 +225,14 @@ public:
     // str.Append('/');
     // str.AppendInt(BaseApp::setup.timeSignature.get_denominator());
     // str.Append(" ");
-    str.AppendInt(BaseApp::gnome.get_bar() + 1);
+    str.AppendInt(TBasicApp::gnome.get_bar() + 1);
     str.Append(':');
-    str.AppendInt(BaseApp::gnome.get_beat() + 1);
+    str.AppendInt(TBasicApp::gnome.get_beat() + 1);
   }
+
+  void load_voice_config() {}
+
+  void save_voice_config() const {}
 
 protected:
   /////////////////////////////////////////////////////////////////////////////
@@ -283,62 +249,62 @@ protected:
   /// @brief
   virtual void make_events()
   {
-    const std::size_t scaleIdx = randomRange(
+    const std::size_t scale_idx = randomRange(
       static_cast<std::size_t>(0), ArrayLen(music::HEPATONIC_D12_SCALES) - 1);
-    auto& scale = music::HEPATONIC_D12_SCALES[scaleIdx];
-    BaseApp::setup.scaleMap.set_scale(scale);
-    scaleName_.set(scale.name);
+    auto& scale = music::HEPATONIC_D12_SCALES[scale_idx];
+    TBasicApp::setup.scale_map.set_scale(scale);
+    scale_name_.set(scale.name);
 
     // Recreate our chord events
-    chordManager_.make_chord_events();
+    chord_manager_.make_chord_events();
 
     // And now use those chords to create events for our voices
     for (auto& m : managers_) {
-      m.make_note_events_from_chords(chordManager_.get_events());
+      m.make_note_events_from_chords(chord_manager_.get_events());
     }
   }
 
 private:
   SystemConfig config_;
   bool running_;
-  MString<20> scaleName_;
+  MString<20> scale_name_;
 
-  ChordRole chordRole_;
-  ChordPersona chordPersona_;
-  ChordEventSetManager chordManager_;
+  TPersonaRole chord_role_;
+  TChordPersona chord_persona_;
+  TChordEventSetManager chord_manager_;
 
-  std::array<VoiceRole, VOICE_COUNT> roles_;
-  std::array<Persona, VOICE_COUNT> personas_;
-  std::array<NoteEventSetManager, VOICE_COUNT> managers_;
+  std::array<TPersonaRole, VOICE_COUNT> roles_;
+  std::array<TPersona, VOICE_COUNT> personas_;
+  std::array<TNoteEventSetManager, VOICE_COUNT> managers_;
 
   /////////////////////////////////////////////////////////////////////////////
   /// @brief
   /// @param setup
   /// @return
-  static std::array<NoteEventSetManager, VOICE_COUNT> make_managers(
-    const MySetup& setup)
+  static std::array<TNoteEventSetManager, VOICE_COUNT> make_managers(
+    const TSetup& setup)
   {
     if constexpr (VOICE_COUNT == 1) {
       return { {
-        NoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
       } };
     } else if constexpr (VOICE_COUNT == 2) {
       return { {
-        NoteEventSetManager{ setup },
-        NoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
       } };
     } else if constexpr (VOICE_COUNT == 3) {
       return { {
-        NoteEventSetManager{ setup },
-        NoteEventSetManager{ setup },
-        NoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
       } };
     } else if constexpr (VOICE_COUNT == 4) {
       return { {
-        NoteEventSetManager{ setup },
-        NoteEventSetManager{ setup },
-        NoteEventSetManager{ setup },
-        NoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
       } };
     } else {
       static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
@@ -350,79 +316,99 @@ private:
   /////////////////////////////////////////////////////////////////////////////
   /// @brief
   /// @return
-  static std::array<VoiceRole, VOICE_COUNT> make_roles()
+  static std::array<TPersonaRole, VOICE_COUNT> make_roles()
   {
     if constexpr (VOICE_COUNT == 1) {
       return { {
-        VoiceRole{ "Bass A",
-                   -2,
-                   Range<float>(0.6F, 0.9F),
-                   Range<float>(0.0F, 0.0F),
-                   music::NoteValue::Quarter,
-                   music::SCALE_WEIGHTS_7_UNIFORM },
+        // Single voice?
+        TPersonaRole(music::NoteValue::Quarter,
+                     0,
+                     music::SCALE_WEIGHTS_7_UNIFORM,
+                     0.6F,
+                     0.9F,
+                     0.0F,
+                     0.5F),
       } };
     } else if constexpr (VOICE_COUNT == 2) {
       return { {
-        VoiceRole{ "Bass A",
-                   -2,
-                   Range<float>(0.6F, 0.9F),
-                   Range<float>(0.0F, 0.0F),
-                   music::NoteValue::Quarter,
-                   music::SCALE_WEIGHTS_7_UNIFORM },
-        VoiceRole{ "Soprano A",
-                   1,
-                   Range<float>(0.0F, 0.0F),
-                   Range<float>(0.6F, 0.9F),
-                   music::NoteValue::Sixteenth,
-                   music::SCALE_WEIGHTS_7_UNIFORM },
+        // Bass
+        TPersonaRole(music::NoteValue::Half,
+                     -2,
+                     music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY,
+                     0.6F,
+                     0.9F,
+                     0.0F,
+                     0.3F),
+        // Treble
+        TPersonaRole(music::NoteValue::Eighth,
+                     2,
+                     music::SCALE_WEIGHTS_7_UNIFORM,
+                     0.6F,
+                     0.9F,
+                     0.2F,
+                     0.6F),
       } };
     } else if constexpr (VOICE_COUNT == 3) {
       return { {
-        VoiceRole{ "Bass A",
-                   -2,
-                   Range<float>(0.6F, 0.9F),
-                   Range<float>(0.0F, 0.0F),
-                   music::NoteValue::Half,
-                   music::SCALE_WEIGHTS_7_UNIFORM },
-        VoiceRole{ "Alto A",
-                   0,
-                   Range<float>(0.0F, 0.0F),
-                   Range<float>(0.5F, 0.7F),
-                   music::NoteValue::Eighth,
-                   music::SCALE_WEIGHTS_7_UNIFORM },
-        VoiceRole{ "Soprano A",
-                   1,
-                   Range<float>(0.6F, 0.9F),
-                   Range<float>(0.0F, 0.0F),
-                   music::NoteValue::Sixteenth,
-                   music::SCALE_WEIGHTS_7_UNIFORM },
+        // Bass
+        TPersonaRole(music::NoteValue::Half,
+                     -2,
+                     music::SCALE_WEIGHTS_7_TONIC_HEAVY,
+                     0.6F,
+                     0.9F,
+                     0.0F,
+                     0.3F),
+        // Mids
+        TPersonaRole(music::NoteValue::Quarter,
+                     0,
+                     music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY,
+                     0.2F,
+                     0.7F,
+                     0.2F,
+                     0.6F),
+        // Treble
+        TPersonaRole(music::NoteValue::Eighth,
+                     2,
+                     music::SCALE_WEIGHTS_7_UNIFORM,
+                     0.6F,
+                     0.9F,
+                     0.3F,
+                     0.6F),
       } };
     } else if constexpr (VOICE_COUNT == 4) {
       return { {
-        VoiceRole{ "Bass A",
-                   -2,
-                   Range<float>(0.6F, 0.9F),
-                   Range<float>(0.0F, 0.0F),
-                   music::NoteValue::Half,
-                   music::SCALE_WEIGHTS_7_TONIC_HEAVY },
-        VoiceRole{ "Tenor A",
-                   -1,
-                   Range<float>(0.3F, 0.7F),
-                   Range<float>(0.4F, 0.2F),
-                   music::NoteValue::Quarter,
-                   music::SCALE_WEIGHTS_7_TONIC_HEAVY },
-        VoiceRole{ "Alto A",
-                   0,
-                   Range<float>(0.3F, 0.8F),
-                   Range<float>(0.0F, 0.0F),
-                   music::NoteValue::Eighth,
-                   music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY },
-        VoiceRole{ "Soprano A",
-                   1,
-                   Range<float>(0.3F, 0.9F),
-                   Range<float>(0.1F, 0.4F),
-                   music::NoteValue::Sixteenth,
-                   music::SCALE_WEIGHTS_7_UNIFORM },
+        // Bass
+        TPersonaRole(music::NoteValue::Half,
+                     -2,
+                     music::SCALE_WEIGHTS_7_TONIC_HEAVY,
+                     0.6F,
+                     0.9F,
+                     0.0F,
+                     0.0F),
+        // Tenor
+        TPersonaRole(music::NoteValue::Quarter,
+                     -1,
+                     music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY,
+                     0.3F,
+                     0.7F,
+                     0.2F,
+                     0.4F),
+        // Alto
+        TPersonaRole(music::NoteValue::Eighth,
+                     0,
+                     music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY,
+                     0.3F,
+                     0.8F,
+                     0.0F,
+                     0.0F),
+        // Soprano
+        TPersonaRole(music::NoteValue::Sixteenth,
+                     1,
+                     music::SCALE_WEIGHTS_7_UNIFORM,
+                     0.3F,
+                     0.9F,
+                     0.1F,
+                     0.4F),
       } };
     } else {
       static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
@@ -434,29 +420,29 @@ private:
   /////////////////////////////////////////////////////////////////////////////
   /// @brief
   /// @return
-  std::array<Persona, VOICE_COUNT> make_personas()
+  std::array<TPersona, VOICE_COUNT> make_personas()
   {
     if constexpr (VOICE_COUNT == 1) {
       return { {
-        Persona{ "BASS VOICE", BaseApp::setup, roles_[0] },
+        TPersona{ "BASS VOICE", TBasicApp::setup, roles_[0] },
       } };
     } else if constexpr (VOICE_COUNT == 2) {
       return { {
-        Persona{ "BASS VOICE", BaseApp::setup, roles_[0] },
-        Persona{ "SOPRANO VOICE", BaseApp::setup, roles_[1] },
+        TPersona{ "BASS VOICE", TBasicApp::setup, roles_[0] },
+        TPersona{ "SOPRANO VOICE", TBasicApp::setup, roles_[1] },
       } };
     } else if constexpr (VOICE_COUNT == 3) {
       return { {
-        Persona{ "BASS VOICE", BaseApp::setup, roles_[0] },
-        Persona{ "ALTO VOICE", BaseApp::setup, roles_[1] },
-        Persona{ "SOPRANO VOICE", BaseApp::setup, roles_[2] },
+        TPersona{ "BASS VOICE", TBasicApp::setup, roles_[0] },
+        TPersona{ "ALTO VOICE", TBasicApp::setup, roles_[1] },
+        TPersona{ "SOPRANO VOICE", TBasicApp::setup, roles_[2] },
       } };
     } else if constexpr (VOICE_COUNT == 4) {
       return { {
-        Persona{ "BASS VOICE", BaseApp::setup, roles_[0] },
-        Persona{ "TENOR VOICE", BaseApp::setup, roles_[1] },
-        Persona{ "ALTO VOICE", BaseApp::setup, roles_[2] },
-        Persona{ "SOPRANO VOICE", BaseApp::setup, roles_[3] },
+        TPersona{ "BASS VOICE", TBasicApp::setup, roles_[0] },
+        TPersona{ "TENOR VOICE", TBasicApp::setup, roles_[1] },
+        TPersona{ "ALTO VOICE", TBasicApp::setup, roles_[2] },
+        TPersona{ "SOPRANO VOICE", TBasicApp::setup, roles_[3] },
       } };
     } else {
       static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
