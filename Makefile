@@ -2,7 +2,7 @@ TARGET = ChoirSATB
 #APP_TYPE = BOOT_QSPI
 
 USE_DAISYSP_LGPL = 1
-DEBUG := 1
+#DEBUG := 1
 PLATFORM = DAISY_SEED
 
 # Library Locations
@@ -37,8 +37,8 @@ C_SOURCES += \
 	$(MONKEY_C_SOURCES)
 	
 C_DEFS += -DDAISY_PLATFORM -DPLATFORM=$(PLATFORM) -Wno-unused-variable -Wno-unused-function -Wno-unused-but-set-variable
-OPT = -Og 
-#OPT = -Os
+#OPT = -Og 
+OPT = -Os
 C_INCLUDES += -I$(APP_INC) -I$(MONKEY_INC) -I$(MONKEY_DAYSEYE_INC) 
 
 CPP_STANDARD ?= -std=gnu++17
