@@ -381,7 +381,7 @@ private:
         TPersonaRole(music::NoteValue::Half,
                      -2,
                      music::SCALE_WEIGHTS_7_TONIC_HEAVY,
-                     0.6F,
+                     0.7F,
                      0.9F,
                      0.0F,
                      0.0F),
@@ -391,7 +391,7 @@ private:
                      music::SCALE_WEIGHTS_7_CHORD_TONE_HEAVY,
                      0.3F,
                      0.7F,
-                     0.2F,
+                     0.4F,
                      0.4F),
         // Alto
         TPersonaRole(music::NoteValue::Eighth,
@@ -402,13 +402,13 @@ private:
                      0.0F,
                      0.0F),
         // Soprano
-        TPersonaRole(music::NoteValue::Sixteenth,
+        TPersonaRole(music::NoteValue::Eighth,
                      1,
                      music::SCALE_WEIGHTS_7_UNIFORM,
-                     0.3F,
-                     0.9F,
+                     0.2F,
+                     0.98F,
                      0.1F,
-                     0.4F),
+                     0.5F),
       } };
     } else {
       static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||

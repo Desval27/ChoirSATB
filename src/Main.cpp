@@ -83,6 +83,7 @@ TPersistentStorage storage_slots[VOICE_COUNT] = { { hw.qspi },
                                                   { hw.qspi },
                                                   { hw.qspi },
                                                   { hw.qspi } };
+bool storage_slots_initialized = false;
 
 ///////////////////////////////////////////////////////////////////////////////
 // UI & Menu Structure
@@ -106,12 +107,25 @@ open_synth_voice_page(void* rawContext)
 }
 
 void
-load_voice_config(void* rawContext)
+init_voice_config_storage()
 {
-  PersistedVoiceConfig defaults;
   for (int i = 0; i < VOICE_COUNT; i++) {
     uint32_t offset = i * SLOT_SPACING;
+    PersistedVoiceConfig defaults;
+    PersistedVoiceConfig::mapFrom(theApp.voices[i].config_, defaults);
     storage_slots[i].Init(defaults, offset);
+  }
+  storage_slots_initialized = true;
+}
+
+void
+load_voice_config(void* rawContext)
+{
+  if (!storage_slots_initialized) {
+    init_voice_config_storage();
+  }
+
+  for (int i = 0; i < VOICE_COUNT; i++) {
     PersistedVoiceConfig& loaded = storage_slots[i].GetSettings();
     PersistedVoiceConfig::mapTo(loaded, theApp.voices[i].config_);
   }
@@ -120,6 +134,10 @@ load_voice_config(void* rawContext)
 void
 save_voice_config(void* rawContext)
 {
+  if (!storage_slots_initialized) {
+    init_voice_config_storage();
+  }
+
   for (int i = 0; i < VOICE_COUNT; i++) {
     PersistedVoiceConfig& voice_config = storage_slots[i].GetSettings();
     PersistedVoiceConfig::mapFrom(theApp.voices[i].config_, voice_config);
@@ -265,6 +283,7 @@ main()
 
   float sample_rate = hw.AudioSampleRate();
   init_components(sample_rate);
+  init_voice_config_storage();
   init_ui(sample_rate);
 
   hw.StartAudio(AudioCallback);
