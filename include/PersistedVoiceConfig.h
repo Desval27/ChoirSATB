@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SynthVoice.h>
+#include <synth_voice.hpp>
 #include <daisy.h>
 
 struct PersistedVoiceConfig

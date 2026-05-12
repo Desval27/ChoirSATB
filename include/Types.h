@@ -4,9 +4,9 @@
 #include <daisysp.h>
 #include <dev/oled_ssd130x.h>
 
-#include <Monkey.h>
-#include <Music/Music.h>
-#include <Music/MusicTemplates.h>
+#include <monkey.hpp>
+#include <music/music.h>
+#include <music/music_templates.hpp>
 
 #include <ChoirSATB.h>
 

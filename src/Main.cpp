@@ -18,7 +18,7 @@
 #include <music/music_tables.hpp>
 
 #include <Pages/SynthVoicePage.h>
-#include <UIOverlord.h>
+#include <ui_overlord.hpp>
 
 #include <ChoirSATB.h>
 #include <Pages/MainPage.h>

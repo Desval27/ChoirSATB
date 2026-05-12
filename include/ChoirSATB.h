@@ -11,8 +11,8 @@
  */
 #pragma once
 
-#include <BasicApp.h>
-#include <SynthVoice.h>
+#include <basic_app.hpp>
+#include <synth_voice.hpp>
 
 #include <music/event_set_manager.hpp>
 #include <music/music_config.hpp>
