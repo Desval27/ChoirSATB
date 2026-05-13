@@ -47,6 +47,7 @@ class ChoirSATB
     MAX_EVENTS,
     music::ChordEventSet<MAX_DEGREES, SCALE_DEGREES, MAX_EVENTS>>;
 
+  using TBasicVoice = BasicVoice<MAX_DEGREES, SCALE_DEGREES>;
   using TSynthVoice = SynthVoice<MAX_DEGREES, SCALE_DEGREES>;
   using TPersonaRole = music::StockPersonaRole<SCALE_DEGREES>;
   using TPersona =
@@ -75,6 +76,7 @@ class ChoirSATB
 private:
   ChoirSATB()
     : TBasicApp()
+    , voices(make_voices())
     , chord_role_(music::NoteValue::Whole)
     , chord_persona_("CHORDS", TBasicApp::setup, chord_role_)
     , chord_manager_(TBasicApp::setup)
@@ -277,6 +279,40 @@ private:
   std::array<TPersona, VOICE_COUNT> personas_;
   std::array<TNoteEventSetManager, VOICE_COUNT> managers_;
 
+  static std::array<TSynthVoice, VOICE_COUNT> make_voices()
+  {
+    if constexpr (VOICE_COUNT == 1) {
+      return { {
+        TSynthVoice{},
+      } };
+    }
+    if constexpr (VOICE_COUNT == 2) {
+      return { {
+        TSynthVoice{},
+        TSynthVoice{},
+      } };
+    }
+    if constexpr (VOICE_COUNT == 3) {
+      return { {
+        TSynthVoice{},
+        TSynthVoice{},
+        TSynthVoice{},
+      } };
+    }
+    if constexpr (VOICE_COUNT == 4) {
+      return { {
+        TSynthVoice{},
+        TSynthVoice{},
+        TSynthVoice{},
+        TSynthVoice{},
+      } };
+    }
+
+    static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
+                    VOICE_COUNT == 4,
+                  "Unsupported ChoirSATB voice count");
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /// @brief
   /// @param setup
@@ -288,29 +324,31 @@ private:
       return { {
         TNoteEventSetManager{ setup },
       } };
-    } else if constexpr (VOICE_COUNT == 2) {
-      return { {
-        TNoteEventSetManager{ setup },
-        TNoteEventSetManager{ setup },
-      } };
-    } else if constexpr (VOICE_COUNT == 3) {
-      return { {
-        TNoteEventSetManager{ setup },
-        TNoteEventSetManager{ setup },
-        TNoteEventSetManager{ setup },
-      } };
-    } else if constexpr (VOICE_COUNT == 4) {
-      return { {
-        TNoteEventSetManager{ setup },
-        TNoteEventSetManager{ setup },
-        TNoteEventSetManager{ setup },
-        TNoteEventSetManager{ setup },
-      } };
-    } else {
-      static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
-                      VOICE_COUNT == 4,
-                    "Unsupported ChoirSATB voice count");
     }
+    if constexpr (VOICE_COUNT == 2) {
+      return { {
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+      } };
+    }
+    if constexpr (VOICE_COUNT == 3) {
+      return { {
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+      } };
+    }
+    if constexpr (VOICE_COUNT == 4) {
+      return { {
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+        TNoteEventSetManager{ setup },
+      } };
+    }
+    static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
+                    VOICE_COUNT == 4,
+                  "Unsupported ChoirSATB voice count");
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -329,7 +367,8 @@ private:
                      0.0F,
                      0.5F),
       } };
-    } else if constexpr (VOICE_COUNT == 2) {
+    }
+    if constexpr (VOICE_COUNT == 2) {
       return { {
         // Bass
         TPersonaRole(music::NoteValue::Half,
@@ -348,7 +387,8 @@ private:
                      0.2F,
                      0.6F),
       } };
-    } else if constexpr (VOICE_COUNT == 3) {
+    }
+    if constexpr (VOICE_COUNT == 3) {
       return { {
         // Bass
         TPersonaRole(music::NoteValue::Half,
@@ -375,7 +415,8 @@ private:
                      0.3F,
                      0.6F),
       } };
-    } else if constexpr (VOICE_COUNT == 4) {
+    }
+    if constexpr (VOICE_COUNT == 4) {
       return { {
         // Bass
         TPersonaRole(music::NoteValue::Half,
@@ -410,11 +451,10 @@ private:
                      0.1F,
                      0.5F),
       } };
-    } else {
-      static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
-                      VOICE_COUNT == 4,
-                    "Unsupported ChoirSATB voice count");
     }
+    static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
+                    VOICE_COUNT == 4,
+                  "Unsupported ChoirSATB voice count");
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -426,28 +466,30 @@ private:
       return { {
         TPersona{ "BASS VOICE", TBasicApp::setup, roles_[0] },
       } };
-    } else if constexpr (VOICE_COUNT == 2) {
+    }
+    if constexpr (VOICE_COUNT == 2) {
       return { {
         TPersona{ "BASS VOICE", TBasicApp::setup, roles_[0] },
         TPersona{ "SOPRANO VOICE", TBasicApp::setup, roles_[1] },
       } };
-    } else if constexpr (VOICE_COUNT == 3) {
+    }
+    if constexpr (VOICE_COUNT == 3) {
       return { {
         TPersona{ "BASS VOICE", TBasicApp::setup, roles_[0] },
         TPersona{ "ALTO VOICE", TBasicApp::setup, roles_[1] },
         TPersona{ "SOPRANO VOICE", TBasicApp::setup, roles_[2] },
       } };
-    } else if constexpr (VOICE_COUNT == 4) {
+    }
+    if constexpr (VOICE_COUNT == 4) {
       return { {
         TPersona{ "BASS VOICE", TBasicApp::setup, roles_[0] },
         TPersona{ "TENOR VOICE", TBasicApp::setup, roles_[1] },
         TPersona{ "ALTO VOICE", TBasicApp::setup, roles_[2] },
         TPersona{ "SOPRANO VOICE", TBasicApp::setup, roles_[3] },
       } };
-    } else {
-      static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
-                      VOICE_COUNT == 4,
-                    "Unsupported ChoirSATB voice count");
     }
+    static_assert(VOICE_COUNT == 1 || VOICE_COUNT == 2 || VOICE_COUNT == 3 ||
+                    VOICE_COUNT == 4,
+                  "Unsupported ChoirSATB voice count");
   }
 };
