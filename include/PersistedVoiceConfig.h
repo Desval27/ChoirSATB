@@ -21,6 +21,10 @@ struct PersistedVoiceConfig
   float amp_env_sustain;
   float amp_env_release;
   float amp_env_amount;
+  bool flt_key_track;
+  int flt_mode;
+  float flt_env_sustain;
+  float flt_env_release;
 
   PersistedVoiceConfig()
     : volume(1.0F)
@@ -39,6 +43,10 @@ struct PersistedVoiceConfig
     , amp_env_sustain(0.6F)
     , amp_env_release(0.5F)
     , amp_env_amount(1.0F)
+    , flt_key_track(false)
+    , flt_mode(FILTER_MODE_LOW)
+    , flt_env_sustain(0.6F)
+    , flt_env_release(0.5F)
   //: PersistedVoiceConfig(SynthVoiceConfig())
   {
   }
@@ -56,7 +64,11 @@ struct PersistedVoiceConfig
            other.amp_env_decay == amp_env_decay &&
            other.amp_env_sustain == amp_env_sustain &&
            other.amp_env_release == amp_env_release &&
-           other.amp_env_amount == amp_env_amount;
+           other.amp_env_amount == amp_env_amount &&
+           other.flt_key_track == flt_key_track &&
+           other.flt_mode == flt_mode &&
+           other.flt_env_sustain == flt_env_sustain &&
+           other.flt_env_release == flt_env_release;
   }
 
   bool operator!=(const PersistedVoiceConfig& other) const
@@ -72,18 +84,22 @@ struct PersistedVoiceConfig
   //   balance = config.balance.Get();
   //   period = config.period.Get();
   //   wave_form = config.waveForm.GetIndex();
-  //   noise_level = config.noiseLevel.Get();
-  //   flt_freq = config.fltFreq.Get();
-  //   flt_res = config.fltRes.Get();
-  //   flt_env_attack = config.fltEnvelope.attack.Get();
-  //   flt_env_decay = config.fltEnvelope.decay.Get();
-  //   flt_env_amount = config.fltEnvelope.amount.Get();
-  //   amp_level = config.ampLevel.Get();
-  //   amp_env_attack = config.ampEnvelope.attack.Get();
-  //   amp_env_decay = config.ampEnvelope.decay.Get();
-  //   amp_env_sustain = config.ampEnvelope.sustain.Get();
-  //   amp_env_release = config.ampEnvelope.release.Get();
-  //   amp_env_amount = config.ampEnvelope.amount.Get();
+  //   noise_level = config.noise_level.Get();
+  //   flt_freq = config.flt_freq.Get();
+  //   flt_key_track = config.flt_key_track;
+  //   flt_mode = config.flt_mode.GetIndex();
+  //   flt_res = config.flt_res.Get();
+  //   flt_env_attack = config.flt_envelope.attack.Get();
+  //   flt_env_decay = config.flt_envelope.decay.Get();
+  //   flt_env_sustain = config.flt_envelope.sustain.Get();
+  //   flt_env_release = config.flt_envelope.release.Get();
+  //   flt_env_amount = config.flt_envelope.amount.Get();
+  //   amp_level = config.amp_level.Get();
+  //   amp_env_attack = config.amp_envelope.attack.Get();
+  //   amp_env_decay = config.amp_envelope.decay.Get();
+  //   amp_env_sustain = config.amp_envelope.sustain.Get();
+  //   amp_env_release = config.amp_envelope.release.Get();
+  //   amp_env_amount = config.amp_envelope.amount.Get();
   //   return *this;
   // }
 
@@ -94,18 +110,22 @@ struct PersistedVoiceConfig
   //   config.balance = balance;
   //   config.period = period;
   //   config.waveForm = wave_form;
-  //   config.noiseLevel = noise_level;
-  //   config.fltFreq = flt_freq;
-  //   config.fltRes = flt_res;
-  //   config.fltEnvelope.attack = flt_env_attack;
-  //   config.fltEnvelope.decay = flt_env_decay;
-  //   config.fltEnvelope.amount = flt_env_amount;
-  //   config.ampLevel = amp_level;
-  //   config.ampEnvelope.attack = amp_env_attack;
-  //   config.ampEnvelope.decay = amp_env_decay;
-  //   config.ampEnvelope.sustain = amp_env_sustain;
-  //   config.ampEnvelope.release = amp_env_release;
-  //   config.ampEnvelope.amount = amp_env_amount;
+  //   config.noise_level = noise_level;
+  //   config.flt_freq = flt_freq;
+  //   config.flt_key_track = flt_key_track;
+  //   config.flt_mode = flt_mode;
+  //   config.flt_res = flt_res;
+  //   config.flt_envelope.attack = flt_env_attack;
+  //   config.flt_envelope.decay = flt_env_decay;
+  //   config.flt_envelope.sustain = flt_env_sustain;
+  //   config.flt_envelope.release = flt_env_release;
+  //   config.flt_envelope.amount = flt_env_amount;
+  //   config.amp_level = amp_level;
+  //   config.amp_envelope.attack = amp_env_attack;
+  //   config.amp_envelope.decay = amp_env_decay;
+  //   config.amp_envelope.sustain = amp_env_sustain;
+  //   config.amp_envelope.release = amp_env_release;
+  //   config.amp_envelope.amount = amp_env_amount;
   //   return config;
   // }
 
@@ -114,19 +134,23 @@ struct PersistedVoiceConfig
     dst.volume = src.volume;
     dst.balance = src.balance;
     dst.period = src.period;
-    dst.wave_form = src.waveForm;
-    dst.noise_level = src.noiseLevel;
-    dst.flt_freq = src.fltFreq;
-    dst.flt_res = src.fltRes;
-    dst.flt_env_attack = src.fltEnvelope.attack;
-    dst.flt_env_decay = src.fltEnvelope.decay;
-    dst.flt_env_amount = src.fltEnvelope.amount;
-    dst.amp_level = src.ampLevel;
-    dst.amp_env_attack = src.ampEnvelope.attack;
-    dst.amp_env_decay = src.ampEnvelope.decay;
-    dst.amp_env_sustain = src.ampEnvelope.sustain;
-    dst.amp_env_release = src.ampEnvelope.release;
-    dst.amp_env_amount = src.ampEnvelope.amount;
+    dst.wave_form = src.wave_form;
+    dst.noise_level = src.noise_level;
+    dst.flt_freq = src.flt_freq;
+    dst.flt_key_track = src.flt_key_track;
+    dst.flt_mode = src.flt_mode;
+    dst.flt_res = src.flt_res;
+    dst.flt_env_attack = src.flt_envelope.attack;
+    dst.flt_env_decay = src.flt_envelope.decay;
+    dst.flt_env_sustain = src.flt_envelope.sustain;
+    dst.flt_env_release = src.flt_envelope.release;
+    dst.flt_env_amount = src.flt_envelope.amount;
+    dst.amp_level = src.amp_level;
+    dst.amp_env_attack = src.amp_envelope.attack;
+    dst.amp_env_decay = src.amp_envelope.decay;
+    dst.amp_env_sustain = src.amp_envelope.sustain;
+    dst.amp_env_release = src.amp_envelope.release;
+    dst.amp_env_amount = src.amp_envelope.amount;
   }
 
   static void mapTo(const PersistedVoiceConfig& src, SynthVoiceConfig& dst)
@@ -134,19 +158,23 @@ struct PersistedVoiceConfig
     dst.volume = src.volume;
     dst.balance = src.balance;
     dst.period = src.period;
-    dst.waveForm = src.wave_form;
-    dst.noiseLevel = src.noise_level;
-    dst.fltFreq = src.flt_freq;
-    dst.fltRes = src.flt_res;
-    dst.fltEnvelope.attack = src.flt_env_attack;
-    dst.fltEnvelope.decay = src.flt_env_decay;
-    dst.fltEnvelope.amount = src.flt_env_amount;
-    dst.ampLevel = src.amp_level;
-    dst.ampEnvelope.attack = src.amp_env_attack;
-    dst.ampEnvelope.decay = src.amp_env_decay;
-    dst.ampEnvelope.sustain = src.amp_env_sustain;
-    dst.ampEnvelope.release = src.amp_env_release;
-    dst.ampEnvelope.amount = src.amp_env_amount;
+    dst.wave_form = src.wave_form;
+    dst.noise_level = src.noise_level;
+    dst.flt_freq = src.flt_freq;
+    dst.flt_key_track = src.flt_key_track;
+    dst.flt_mode = src.flt_mode;
+    dst.flt_res = src.flt_res;
+    dst.flt_envelope.attack = src.flt_env_attack;
+    dst.flt_envelope.decay = src.flt_env_decay;
+    dst.flt_envelope.sustain = src.flt_env_sustain;
+    dst.flt_envelope.release = src.flt_env_release;
+    dst.flt_envelope.amount = src.flt_env_amount;
+    dst.amp_level = src.amp_level;
+    dst.amp_envelope.attack = src.amp_env_attack;
+    dst.amp_envelope.decay = src.amp_env_decay;
+    dst.amp_envelope.sustain = src.amp_env_sustain;
+    dst.amp_envelope.release = src.amp_env_release;
+    dst.amp_envelope.amount = src.amp_env_amount;
   }
 };
 using TPersistentStorage = daisy::PersistentStorage<PersistedVoiceConfig>;

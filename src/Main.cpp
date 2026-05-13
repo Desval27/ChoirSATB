@@ -261,7 +261,7 @@ void
 init_ui(float sample_rate)
 {
   mainMenu.Init(mainMenuItems,
-                ArrayLen(mainMenuItems),
+                array_len(mainMenuItems),
                 AbstractMenu::Orientation::leftRightSelectUpDownModify,
                 true);
 

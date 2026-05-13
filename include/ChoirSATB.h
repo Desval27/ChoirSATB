@@ -251,8 +251,8 @@ protected:
   /// @brief
   virtual void make_events()
   {
-    const std::size_t scale_idx = randomRange(
-      static_cast<std::size_t>(0), ArrayLen(music::HEPATONIC_D12_SCALES) - 1);
+    const std::size_t scale_idx = random_range(
+      static_cast<std::size_t>(0), array_len(music::HEPATONIC_D12_SCALES) - 1);
     auto& scale = music::HEPATONIC_D12_SCALES[scale_idx];
     TBasicApp::setup.scale_map.set_scale(scale);
     scale_name_.set(scale.name);
